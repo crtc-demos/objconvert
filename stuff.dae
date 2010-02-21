@@ -1,0 +1,1585 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <authoring_tool>EQUINOX-3D  Collada exporter v1.0.0</authoring_tool>
+    </contributor>
+    <created>2009-08-05T23:38:37Z</created>
+    <modified>2009-08-05T23:38:37Z</modified>
+    <revision>1.0</revision>
+  </asset>
+  <library_lights>
+    <light id="light" name="light">
+      <technique_common>
+        <point>
+          <color> 1  1  1</color>
+          <constant_attenuation> 1</constant_attenuation>
+          <linear_attenuation> 0</linear_attenuation>
+          <quadratic_attenuation> 0</quadratic_attenuation>
+        </point>
+      </technique_common>
+      <extra type="E3dObject">
+        <technique profile="EQUINOX-3D">
+          <param name="Selection" type="int">0</param>
+          <param name="Visible" type="boolean">true</param>
+          <param name="BranchExpanded" type="boolean">true</param>
+        </technique>
+      </extra>
+      <extra type="E3dLight">
+        <technique profile="EQUINOX-3D">
+          <param name="Type" type="int">1</param>
+          <param name="Color" count="3" type="float">
+ 1
+ 1
+ 1.00000000</param>
+          <param name="QuadraticAttenuation" type="float"> 0</param>
+          <param name="SpotExponent" type="float"> 5</param>
+          <param name="SpotCutoff" type="float"> 30</param>
+          <param name="ShadowBrightness" type="float"> 0.5</param>
+        </technique>
+      </extra>
+    </light>
+  </library_lights>
+  <library_cameras>
+    <camera id="3Dcamera">
+      <optics>
+        <technique_common>
+          <perspective>
+            <yfov> 36</yfov>
+            <znear> 0.1</znear>
+            <zfar> 32767</zfar>
+          </perspective>
+        </technique_common>
+      </optics>
+    </camera>
+  </library_cameras>
+  <library_geometries>
+    <geometry id="box" name="box">
+      <mesh>
+        <source id="Mbox-Pos">
+          <float_array id="Mbox-Pos-array" count="24">
+-0.49918178  0.5  0.50457746
+ 0.50506777  0.49860683  0.4961856
+-0.5 -0.5  0.5
+ 0.5 -0.5  0.5
+-0.5  0.5 -0.5
+ 0.5  0.5 -0.5
+-0.5 -0.5 -0.5
+ 0.5 -0.5 -0.5</float_array>
+          <technique_common>
+            <accessor source="#Mbox-Pos-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Mbox-PG0-Nm">
+          <float_array id="Mbox-PG0-Nm-array" count="90">
+-0.99999934  0.00081449  0.00081449
+-0.99999934  0.00081449  0.00081449
+-0.99999934  0.00081449  0.00081449
+-1  0  0
+-1  0  0
+-1  0  0
+ 0 -1 -0
+ 0 -1 -0
+-0 -1 -0
+ 0 -1 -0
+ 0 -1 -0
+ 0 -1 -0
+-0  0.99999905  0.0013985
+-0  0.99999905  0.0013985
+-0  0.99999905  0.0013985
+ 0.00138726  0.99999905 -0.00000113
+ 0.00138726  0.99999905 -0.00000113
+ 0.00138726  0.99999905 -0.00000113
+-0  0 -1
+-0  0 -1
+-0  0 -1
+-0  0 -1
+-0  0 -1
+-0  0 -1
+ 0.00836123  0.00377713  0.99995792
+ 0.00836123  0.00377713  0.99995792
+ 0.00836123  0.00377713  0.99995792
+-0 -0.00457741  0.99998951
+-0 -0.00457741  0.99998951
+-0 -0.00457741  0.99998951</float_array>
+          <technique_common>
+            <accessor source="#Mbox-PG0-Nm-array" count="30" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+          <technique profile="EQUINOX-3D">
+            <program id="NormalsFromSmoothingAngle">
+              <param name="Smoothing_angle" type="float"> 0</param>
+            </program>
+          </technique>
+        </source>
+        <source id="Mbox-PG0-UV">
+          <float_array id="Mbox-PG0-UV-array" count="60">
+ 0  0
+ 0.33333334  0.5
+ 0.33333334  0
+ 0  0
+ 0  0.5
+ 0.33333334  0.5
+ 0.33333334  0
+ 0.66666669  0.5
+ 0.66666669  0
+ 0.33333334  0
+ 0.33333334  0.5
+ 0.66666669  0.5
+ 0.33333334  0.5
+ 0.66666669  1
+ 0.66666669  0.5
+ 0.33333334  0.5
+ 0.33333334  1
+ 0.66666669  1
+ 0.66666669  0
+ 1  0.5
+ 1  0
+ 0.66666669  0
+ 0.66666669  0.5
+ 1  0.5
+ 0.66666669  0.5
+ 1  1
+ 1  0.5
+ 0.66666669  0.5
+ 0.66666669  1
+ 1  1</float_array>
+          <technique_common>
+            <accessor source="#Mbox-PG0-UV-array" count="30" stride="2">
+              <param name="U" type="float"/>
+              <param name="V" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Mbox-PG1-Nm">
+          <float_array id="Mbox-PG1-Nm-array" count="18">
+ 0.99998707  0 -0.0050871
+ 0.99998707  0 -0.0050871
+ 0.99998707  0 -0.0050871
+ 0.99998713 -0.00507477 -0
+ 0.99998713 -0.00507477 -0
+ 0.99998713 -0.00507477 -0</float_array>
+          <technique_common>
+            <accessor source="#Mbox-PG1-Nm-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+          <technique profile="EQUINOX-3D">
+            <program id="NormalsFromSmoothingAngle">
+              <param name="Smoothing_angle" type="float"> 0</param>
+            </program>
+          </technique>
+        </source>
+        <source id="Mbox-PG1-UV">
+          <float_array id="Mbox-PG1-UV-array" count="12">
+ 0  0.5
+ 0.33333334  1
+ 0.33333334  0.5
+ 0  0.5
+ 0  1
+ 0.33333334  1</float_array>
+          <technique_common>
+            <accessor source="#Mbox-PG1-UV-array" count="6" stride="2">
+              <param name="U" type="float"/>
+              <param name="V" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Mbox-Vtx">
+          <input semantic="POSITION" source="#Mbox-Pos"/>
+        </vertices>
+        <polygons count="10">
+          <input semantic="VERTEX" source="#Mbox-Vtx" offset="0"/>
+          <input semantic="NORMAL" source="#Mbox-PG0-Nm" offset="1"/>
+          <input semantic="UV" source="#Mbox-PG0-UV" offset="2"/>
+          <p>4 0 0 2 1 1 0 2 2</p>
+          <p>4 3 3 6 4 4 2 5 5</p>
+          <p>2 6 6 7 7 7 3 8 8</p>
+          <p>2 9 9 6 10 10 7 11 11</p>
+          <p>4 12 12 1 13 13 5 14 14</p>
+          <p>4 15 15 0 16 16 1 17 17</p>
+          <p>5 18 18 6 19 19 4 20 20</p>
+          <p>5 21 21 7 22 22 6 23 23</p>
+          <p>0 24 24 3 25 25 1 26 26</p>
+          <p>0 27 27 2 28 28 3 29 29</p>
+          <extra type="E3dPolyGroup">
+            <technique profile="EQUINOX-3D">
+              <param name="Selected" type="boolean">false</param>
+              <param name="Visible" type="boolean">true</param>
+              <param name="VertexNormalType" type="int">3</param>
+              <param name="VectorDrawScale" type="float"> 1</param>
+            </technique>
+          </extra>
+        </polygons>
+        <polygons count="2">
+          <input semantic="VERTEX" source="#Mbox-Vtx" offset="0"/>
+          <input semantic="NORMAL" source="#Mbox-PG1-Nm" offset="1"/>
+          <input semantic="UV" source="#Mbox-PG1-UV" offset="2"/>
+          <p>1 0 0 7 1 1 5 2 2</p>
+          <p>1 3 3 3 4 4 7 5 5</p>
+          <extra type="E3dPolyGroup">
+            <technique profile="EQUINOX-3D">
+              <param name="Selected" type="boolean">false</param>
+              <param name="Visible" type="boolean">true</param>
+              <param name="VertexNormalType" type="int">3</param>
+              <param name="VectorDrawScale" type="float"> 1</param>
+            </technique>
+          </extra>
+        </polygons>
+      </mesh>
+      <extra type="E3dObject">
+        <technique profile="EQUINOX-3D">
+          <param name="Selection" type="int">0</param>
+          <param name="Visible" type="boolean">true</param>
+          <param name="BranchExpanded" type="boolean">true</param>
+        </technique>
+      </extra>
+      <extra type="E3dGeometry">
+        <technique profile="EQUINOX-3D">
+          <param name="Selection" type="int">0</param>
+          <param name="Visible" type="boolean">true</param>
+          <param name="CastsShadows" type="boolean">true</param>
+          <param name="ReceivesShadows" type="boolean">true</param>
+          <param name="LODReference" type="float"> 0</param>
+        </technique>
+      </extra>
+      <extra type="Box">
+        <technique profile="EQUINOX-3D">
+          <param name="XEdgeLength" type="float"> 1</param>
+          <param name="YEdgeLength" type="float"> 1</param>
+          <param name="ZEdgeLength" type="float"> 1</param>
+          <param name="Min" type="float3">-0.5 -0.5 -0.5</param>
+          <param name="Max" type="float3"> 0.5  0.5  0.5</param>
+          <param name="XSubdivisions" type="int">1</param>
+          <param name="YSubdivisions" type="int">1</param>
+          <param name="ZSubdivisions" type="int">1</param>
+          <param name="CoordinateMode" type="int">1</param>
+          <param name="CenterAtBottom" type="boolean">false</param>
+          <param name="Triangles" type="boolean">false</param>
+          <param name="UVs" type="boolean">true</param>
+        </technique>
+      </extra>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="default">
+      <node name="Light" id="Light">
+        <translate>-5  10  4</translate>
+        <rotate> 0  0  1  0</rotate>
+        <rotate> 0  1  0  0</rotate>
+        <rotate> 1  0  0  0</rotate>
+        <scale> 1  1  1</scale>
+        <instance_light url="#light"/>
+        <extra type="E3dNode">
+          <technique profile="EQUINOX-3D">
+            <param name="Selection" type="int">0</param>
+            <param name="Visible" type="boolean">true</param>
+            <param name="BranchExpanded" type="boolean">true</param>
+          </technique>
+        </extra>
+      </node>
+      <node name="Box" id="Box">
+        <translate>-0.25936291 -0.42118201  0.36677986</translate>
+        <rotate> 0  0  1  0</rotate>
+        <rotate> 0  1  0 -0.9552139</rotate>
+        <rotate> 1  0  0  0</rotate>
+        <scale> 8.40957355  8.32631016  8.49366951</scale>
+        <instance_geometry url="#box">
+          <bind_material>
+            <technique_common/>
+          </bind_material>
+        </instance_geometry>
+        <extra type="E3dNode">
+          <technique profile="EQUINOX-3D">
+            <param name="Selection" type="int">0</param>
+            <param name="Visible" type="boolean">true</param>
+            <param name="BranchExpanded" type="boolean">true</param>
+          </technique>
+        </extra>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#default"/>
+  </scene>
+  <extra type="application">
+    <technique profile="EQUINOX-3D">
+      <scene_settings>
+        <param name="OrbitStepLon" type="float"> 0.25</param>
+        <param name="OrbitStepLat" type="float"> 0.25</param>
+        <param name="DollyStep" type="float"> 1</param>
+        <param name="TrackStep" type="float"> 1</param>
+        <param name="BankStep" type="float"> 0.25</param>
+        <param name="FrameToTime" type="float"> 0.25</param>
+        <param name="FlyToOrtho" type="boolean">true</param>
+        <param name="FlyToSchematics" type="boolean">true</param>
+        <param name="FlyToAnimation" type="boolean">true</param>
+        <param name="MouseWheelZoomAndDolly" type="boolean">true</param>
+        <param name="CurrentFrame" type="float">0.000000</param>
+        <param name="StartFrame" type="float">0.000000</param>
+        <param name="EndFrame" type="float">299.000000</param>
+        <param name="FramesPerSec" type="float"> 30</param>
+        <param name="Show3DCursor" type="boolean">false</param>
+        <param name="ShowVertices" type="boolean">true</param>
+        <param name="ShowControlPoints" type="boolean">true</param>
+        <param name="ShowLines" type="boolean">true</param>
+        <param name="ShowCenters" type="boolean">true</param>
+        <param name="ShowPolygonNormals" type="boolean">false</param>
+        <param name="ShowVertexNormals" type="boolean">false</param>
+        <param name="ShowVertexTangents" type="boolean">false</param>
+        <param name="ShowTags" type="boolean">true</param>
+        <param name="ShowSelectedPolygons" type="boolean">true</param>
+        <param name="ShowWireOfHiddenObjects" type="boolean">true</param>
+        <param name="ShowTextureProjectors" type="boolean">true</param>
+        <param name="ShowGridsInShadedMode" type="boolean">true</param>
+        <param name="ShowLampsInWireMode" type="boolean">true</param>
+        <param name="ShowLampsInSolidMode" type="boolean">true</param>
+        <param name="SchematicsOrientation" type="int">2</param>
+        <param name="SchematicsLinkStyle" type="int">3</param>
+        <param name="MaxUndoSteps" type="int">20</param>
+      </scene_settings>
+      <rendererset current_renderer="Ray-tracer">
+        <param name="FileName" type="Name"></param>
+        <param name="StartFrame" type="float">0.000000</param>
+        <param name="EndFrame" type="float">0.000000</param>
+        <param name="FrameStep" type="float">1.000000</param>
+        <param name="ImageXSize" type="int">320</param>
+        <param name="ImageYSize" type="int">240</param>
+        <renderer class="Wireframe">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Wire+Z">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Hidden line">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Color wire">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Shaded wire">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Solid">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Solid+wire">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+        </renderer>
+        <renderer class="Shaded solid">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+          <param name="Shadows" type="boolean">true</param>
+          <param name="Transparency" type="boolean">false</param>
+        </renderer>
+        <renderer class="Shaded solid+wire">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+          <param name="Shadows" type="boolean">true</param>
+          <param name="Transparency" type="boolean">false</param>
+        </renderer>
+        <renderer class="Ray-tracer">
+          <param name="AA" type="int">0</param>
+          <param name="BGColor" type="float4"> 0  0  0  0</param>
+          <param name="Tx" type="boolean">true</param>
+          <param name="Splines" type="boolean">true</param>
+          <param name="CreateHDR" type="boolean">false</param>
+          <param name="Exposure" type="float"> 0</param>
+          <param name="Gain" type="float"> 1</param>
+          <param name="Gamma" type="float"> 1</param>
+          <param name="StartPixS" type="int">4</param>
+          <param name="MaxRayDepth" type="int">12</param>
+          <param name="RayLumaMin" type="float"> 0</param>
+          <param name="FirstHitAccel" type="int">0</param>
+          <param name="GridXC" type="int">32</param>
+          <param name="GridYC" type="int">32</param>
+          <param name="GridZC" type="int">32</param>
+          <param name="Show VoxelGrid" type="boolean">false</param>
+          <param name="Show KDTree" type="boolean">false</param>
+          <param name="Shadows" type="boolean">true</param>
+          <param name="AreaLightType" type="int">3</param>
+          <param name="Reflections" type="boolean">true</param>
+          <param name="Transparency" type="boolean">true</param>
+          <param name="Indirect light paths" type="int">0</param>
+          <param name="Direct lighting" type="boolean">true</param>
+        </renderer>
+      </rendererset>
+      <E3DPanel>
+        <E3DWindow viewmode="TOP" last_viewmode="PERSPECTIVE">
+          <param name="Flags" type="int">0</param>
+          <param name="GridSnap" type="float3"> 1  1  1</param>
+          <param name="GridDisp" type="float3"> 1  1  1</param>
+          <param name="GridCountX" type="int">40</param>
+          <param name="GridCountY" type="int">40</param>
+          <param name="GridCountZ" type="int">40</param>
+          <param name="GridSnapToX" type="boolean">false</param>
+          <param name="GridSnapToY" type="boolean">false</param>
+          <param name="GridSnapToZ" type="boolean">false</param>
+          <param name="GridXYOn" type="boolean">false</param>
+          <param name="GridXZOn" type="boolean">true</param>
+          <param name="GridYZOn" type="boolean">false</param>
+          <param name="GridOn" type="boolean">true</param>
+          <param name="AxesOn" type="boolean">true</param>
+          <param name="RulerOn" type="boolean">false</param>
+          <viewmode type="PERSPECTIVE">
+            <lookat>
+0.000000 12.000000 42.000000
+0.000000 0.000000 0.000000
+0.000000 0.961524 -0.274721
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <perspective>
+                    <yfov> 36</yfov>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </perspective>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TOP">
+            <lookat>
+0.000000 16383.500000 0.000000
+0.000000 0.000000 0.000000
+0.000000 0.000000 -1.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="FRONT">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="RIGHT">
+            <lookat>
+16383.500000 0.000000 0.000000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="SCHEMATICS">
+            <lookat>
+2.500000 -3.250000 16383.500000
+2.500000 -3.250000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.1</xmag>
+                    <ymag> 0.1</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TEXTURE">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="ANIMATION">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <rendererset current_renderer="Wire+Z" last_renderer="Shaded solid">
+            <param name="FileName" type="Name"></param>
+            <param name="StartFrame" type="float">0.000000</param>
+            <param name="EndFrame" type="float">0.000000</param>
+            <param name="FrameStep" type="float">1.000000</param>
+            <param name="ImageXSize" type="int">497</param>
+            <param name="ImageYSize" type="int">372</param>
+            <renderer class="Wireframe">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Wire+Z">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Hidden line">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Color wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Shaded solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Ray-tracer">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0  0  0  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="StartPixS" type="int">4</param>
+              <param name="MaxRayDepth" type="int">12</param>
+              <param name="RayLumaMin" type="float"> 0</param>
+              <param name="FirstHitAccel" type="int">0</param>
+              <param name="GridXC" type="int">32</param>
+              <param name="GridYC" type="int">32</param>
+              <param name="GridZC" type="int">32</param>
+              <param name="Show VoxelGrid" type="boolean">false</param>
+              <param name="Show KDTree" type="boolean">false</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="AreaLightType" type="int">3</param>
+              <param name="Reflections" type="boolean">true</param>
+              <param name="Transparency" type="boolean">true</param>
+              <param name="Indirect light paths" type="int">0</param>
+              <param name="Direct lighting" type="boolean">true</param>
+            </renderer>
+          </rendererset>
+        </E3DWindow>
+        <E3DWindow viewmode="PERSPECTIVE" last_viewmode="SCHEMATICS">
+          <param name="Flags" type="int">0</param>
+          <param name="GridSnap" type="float3"> 1  1  1</param>
+          <param name="GridDisp" type="float3"> 1  1  1</param>
+          <param name="GridCountX" type="int">40</param>
+          <param name="GridCountY" type="int">40</param>
+          <param name="GridCountZ" type="int">40</param>
+          <param name="GridSnapToX" type="boolean">false</param>
+          <param name="GridSnapToY" type="boolean">false</param>
+          <param name="GridSnapToZ" type="boolean">false</param>
+          <param name="GridXYOn" type="boolean">false</param>
+          <param name="GridXZOn" type="boolean">true</param>
+          <param name="GridYZOn" type="boolean">false</param>
+          <param name="GridOn" type="boolean">true</param>
+          <param name="AxesOn" type="boolean">true</param>
+          <param name="RulerOn" type="boolean">false</param>
+          <viewmode type="PERSPECTIVE">
+            <lookat>
+-14.358305 29.508238 30.113974
+0.047104 -0.545950 0.578513
+0.295851 0.737921 -0.606585
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <perspective>
+                    <yfov> 36</yfov>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </perspective>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TOP">
+            <lookat>
+0.000000 16383.500000 0.000000
+0.000000 0.000000 0.000000
+0.000000 0.000000 -1.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="FRONT">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="RIGHT">
+            <lookat>
+16383.500000 0.000000 0.000000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="SCHEMATICS">
+            <lookat>
+2.500000 -3.250000 16383.500000
+2.500000 -3.250000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.1</xmag>
+                    <ymag> 0.1</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TEXTURE">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="ANIMATION">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <rendererset current_renderer="Shaded solid" last_renderer="Wire+Z">
+            <param name="FileName" type="Name"></param>
+            <param name="StartFrame" type="float">0.000000</param>
+            <param name="EndFrame" type="float">0.000000</param>
+            <param name="FrameStep" type="float">1.000000</param>
+            <param name="ImageXSize" type="int">498</param>
+            <param name="ImageYSize" type="int">372</param>
+            <renderer class="Wireframe">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Wire+Z">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Hidden line">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Color wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Shaded solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Ray-tracer">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0  0  0  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="StartPixS" type="int">4</param>
+              <param name="MaxRayDepth" type="int">12</param>
+              <param name="RayLumaMin" type="float"> 0</param>
+              <param name="FirstHitAccel" type="int">0</param>
+              <param name="GridXC" type="int">32</param>
+              <param name="GridYC" type="int">32</param>
+              <param name="GridZC" type="int">32</param>
+              <param name="Show VoxelGrid" type="boolean">false</param>
+              <param name="Show KDTree" type="boolean">false</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="AreaLightType" type="int">3</param>
+              <param name="Reflections" type="boolean">true</param>
+              <param name="Transparency" type="boolean">true</param>
+              <param name="Indirect light paths" type="int">0</param>
+              <param name="Direct lighting" type="boolean">true</param>
+            </renderer>
+          </rendererset>
+        </E3DWindow>
+        <E3DWindow viewmode="FRONT" last_viewmode="PERSPECTIVE">
+          <param name="Flags" type="int">0</param>
+          <param name="GridSnap" type="float3"> 1  1  1</param>
+          <param name="GridDisp" type="float3"> 1  1  1</param>
+          <param name="GridCountX" type="int">40</param>
+          <param name="GridCountY" type="int">40</param>
+          <param name="GridCountZ" type="int">40</param>
+          <param name="GridSnapToX" type="boolean">false</param>
+          <param name="GridSnapToY" type="boolean">false</param>
+          <param name="GridSnapToZ" type="boolean">false</param>
+          <param name="GridXYOn" type="boolean">false</param>
+          <param name="GridXZOn" type="boolean">true</param>
+          <param name="GridYZOn" type="boolean">false</param>
+          <param name="GridOn" type="boolean">true</param>
+          <param name="AxesOn" type="boolean">true</param>
+          <param name="RulerOn" type="boolean">false</param>
+          <viewmode type="PERSPECTIVE">
+            <lookat>
+0.000000 12.000000 42.000000
+0.000000 0.000000 0.000000
+0.000000 0.961524 -0.274721
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <perspective>
+                    <yfov> 36</yfov>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </perspective>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TOP">
+            <lookat>
+0.000000 16383.500000 0.000000
+0.000000 0.000000 0.000000
+0.000000 0.000000 -1.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="FRONT">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="RIGHT">
+            <lookat>
+16383.500000 0.000000 0.000000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="SCHEMATICS">
+            <lookat>
+2.500000 -3.250000 16383.500000
+2.500000 -3.250000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.1</xmag>
+                    <ymag> 0.1</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TEXTURE">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="ANIMATION">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <rendererset current_renderer="Wire+Z" last_renderer="Shaded solid">
+            <param name="FileName" type="Name"></param>
+            <param name="StartFrame" type="float">0.000000</param>
+            <param name="EndFrame" type="float">0.000000</param>
+            <param name="FrameStep" type="float">1.000000</param>
+            <param name="ImageXSize" type="int">497</param>
+            <param name="ImageYSize" type="int">373</param>
+            <renderer class="Wireframe">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Wire+Z">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Hidden line">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Color wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Shaded solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Ray-tracer">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0  0  0  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="StartPixS" type="int">4</param>
+              <param name="MaxRayDepth" type="int">12</param>
+              <param name="RayLumaMin" type="float"> 0</param>
+              <param name="FirstHitAccel" type="int">0</param>
+              <param name="GridXC" type="int">32</param>
+              <param name="GridYC" type="int">32</param>
+              <param name="GridZC" type="int">32</param>
+              <param name="Show VoxelGrid" type="boolean">false</param>
+              <param name="Show KDTree" type="boolean">false</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="AreaLightType" type="int">3</param>
+              <param name="Reflections" type="boolean">true</param>
+              <param name="Transparency" type="boolean">true</param>
+              <param name="Indirect light paths" type="int">0</param>
+              <param name="Direct lighting" type="boolean">true</param>
+            </renderer>
+          </rendererset>
+        </E3DWindow>
+        <E3DWindow viewmode="FRONT" last_viewmode="SCHEMATICS">
+          <param name="Flags" type="int">0</param>
+          <param name="GridSnap" type="float3"> 1  1  1</param>
+          <param name="GridDisp" type="float3"> 1  1  1</param>
+          <param name="GridCountX" type="int">40</param>
+          <param name="GridCountY" type="int">40</param>
+          <param name="GridCountZ" type="int">40</param>
+          <param name="GridSnapToX" type="boolean">false</param>
+          <param name="GridSnapToY" type="boolean">false</param>
+          <param name="GridSnapToZ" type="boolean">false</param>
+          <param name="GridXYOn" type="boolean">false</param>
+          <param name="GridXZOn" type="boolean">true</param>
+          <param name="GridYZOn" type="boolean">false</param>
+          <param name="GridOn" type="boolean">true</param>
+          <param name="AxesOn" type="boolean">true</param>
+          <param name="RulerOn" type="boolean">false</param>
+          <viewmode type="PERSPECTIVE">
+            <lookat>
+0.000000 12.000000 42.000000
+0.000000 0.000000 0.000000
+0.000000 0.961524 -0.274721
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <perspective>
+                    <yfov> 36</yfov>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </perspective>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TOP">
+            <lookat>
+0.000000 16383.500000 0.000000
+0.000000 0.000000 0.000000
+0.000000 0.000000 -1.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="FRONT">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="RIGHT">
+            <lookat>
+16383.500000 0.000000 0.000000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="SCHEMATICS">
+            <lookat>
+2.500000 -3.250000 16383.500000
+2.500000 -3.250000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.1</xmag>
+                    <ymag> 0.1</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="TEXTURE">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <viewmode type="ANIMATION">
+            <lookat>
+0.000000 0.000000 16383.500000
+0.000000 0.000000 0.000000
+0.000000 1.000000 0.000000
+</lookat>
+            <camera>
+              <optics>
+                <technique_common>
+                  <orthographic>
+                    <xmag> 0.06666667</xmag>
+                    <ymag> 0.06666667</ymag>
+                    <znear> 0.1</znear>
+                    <zfar> 32767</zfar>
+                  </orthographic>
+                </technique_common>
+              </optics>
+            </camera>
+          </viewmode>
+          <rendererset current_renderer="Wire+Z" last_renderer="Shaded solid">
+            <param name="FileName" type="Name"></param>
+            <param name="StartFrame" type="float">0.000000</param>
+            <param name="EndFrame" type="float">0.000000</param>
+            <param name="FrameStep" type="float">1.000000</param>
+            <param name="ImageXSize" type="int">498</param>
+            <param name="ImageYSize" type="int">373</param>
+            <renderer class="Wireframe">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Wire+Z">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Hidden line">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Color wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+            </renderer>
+            <renderer class="Shaded solid">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Shaded solid+wire">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0.62500012  0.62500012  0.62500012  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="Transparency" type="boolean">false</param>
+            </renderer>
+            <renderer class="Ray-tracer">
+              <param name="AA" type="int">0</param>
+              <param name="BGColor" type="float4"> 0  0  0  0</param>
+              <param name="Tx" type="boolean">true</param>
+              <param name="Splines" type="boolean">true</param>
+              <param name="CreateHDR" type="boolean">false</param>
+              <param name="Exposure" type="float"> 0</param>
+              <param name="Gain" type="float"> 1</param>
+              <param name="Gamma" type="float"> 1</param>
+              <param name="StartPixS" type="int">4</param>
+              <param name="MaxRayDepth" type="int">12</param>
+              <param name="RayLumaMin" type="float"> 0</param>
+              <param name="FirstHitAccel" type="int">0</param>
+              <param name="GridXC" type="int">32</param>
+              <param name="GridYC" type="int">32</param>
+              <param name="GridZC" type="int">32</param>
+              <param name="Show VoxelGrid" type="boolean">false</param>
+              <param name="Show KDTree" type="boolean">false</param>
+              <param name="Shadows" type="boolean">true</param>
+              <param name="AreaLightType" type="int">3</param>
+              <param name="Reflections" type="boolean">true</param>
+              <param name="Transparency" type="boolean">true</param>
+              <param name="Indirect light paths" type="int">0</param>
+              <param name="Direct lighting" type="boolean">true</param>
+            </renderer>
+          </rendererset>
+        </E3DWindow>
+      </E3DPanel>
+    </technique>
+  </extra>
+</COLLADA>

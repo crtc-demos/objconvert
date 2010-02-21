@@ -1,0 +1,278 @@
+<!-- A rough approximation to a DTD file for Collada (1.4.1), as generated
+     automatically from a single file saved from the Equinox-3D modeller, then
+     hacked mercilessly. Still obviously very incomplete and far too strict in
+     places. Not checked against any standard! YMMV. -->
+
+<!ELEMENT COLLADA ( asset | library_lights | library_cameras | library_effects | library_images | library_geometries | library_materials | library_visual_scenes | scene | extra )* >
+<!ATTLIST COLLADA version NMTOKEN #REQUIRED >
+<!ATTLIST COLLADA xmlns CDATA #REQUIRED >
+
+<!ELEMENT E3DPanel ( E3DWindow+ ) >
+
+<!ELEMENT E3DWindow ( param+, viewmode+, rendererset ) >
+<!ATTLIST E3DWindow last_viewmode NMTOKEN #REQUIRED >
+<!ATTLIST E3DWindow viewmode NMTOKEN #REQUIRED >
+
+<!ELEMENT accessor ( param+ ) >
+<!ATTLIST accessor count NMTOKEN #REQUIRED >
+<!ATTLIST accessor source CDATA #REQUIRED >
+<!ATTLIST accessor stride NMTOKEN #REQUIRED >
+
+<!ELEMENT asset ( contributor | created | modified | revision | unit | up_axis )+ >
+
+<!ELEMENT author ( #PCDATA ) >
+<!ELEMENT authoring_tool ( #PCDATA ) >
+<!ELEMENT comments ( #PCDATA ) >
+<!ELEMENT copyright ( #PCDATA ) >
+<!ELEMENT source_data ( #PCDATA ) >
+
+<!ELEMENT bind_material ( technique_common ) >
+
+<!ELEMENT bind_vertex_input EMPTY >
+<!ATTLIST bind_vertex_input input_semantic CDATA #REQUIRED >
+<!ATTLIST bind_vertex_input input_set CDATA #REQUIRED >
+<!ATTLIST bind_vertex_input semantic CDATA #REQUIRED >
+
+<!ELEMENT bool ( #PCDATA ) >
+
+<!ELEMENT camera ( optics ) >
+<!ATTLIST camera id CDATA #IMPLIED >
+<!ATTLIST camera name CDATA #IMPLIED >
+
+<!ELEMENT color ( #PCDATA ) >
+
+<!ELEMENT constant_attenuation ( #PCDATA ) >
+
+<!ELEMENT contributor ( authoring_tool | author | comments | copyright | source_data )+ >
+
+<!ELEMENT created ( #PCDATA ) >
+
+<!ELEMENT effect ( profile_COMMON ) >
+<!ATTLIST effect id CDATA #REQUIRED >
+<!ATTLIST effect name CDATA #IMPLIED >
+
+<!ELEMENT extra ( technique ) >
+<!ATTLIST extra type CDATA #REQUIRED >
+
+<!ELEMENT falloff_angle ( #PCDATA ) >
+
+<!ELEMENT float ( #PCDATA ) >
+
+<!ELEMENT float3 ( #PCDATA ) >
+
+<!ELEMENT float_array ( #PCDATA ) >
+<!ATTLIST float_array count NMTOKEN #REQUIRED >
+<!ATTLIST float_array id CDATA #REQUIRED >
+
+<!ELEMENT format ( #PCDATA ) >
+
+<!ELEMENT Name_array ( #PCDATA ) >
+<!ATTLIST Name_array count NMTOKEN #REQUIRED >
+<!ATTLIST Name_array id CDATA #REQUIRED >
+
+<!ELEMENT newparam ( surface | sampler2D )+ >
+<!ATTLIST newparam sid CDATA #IMPLIED >
+
+<!ELEMENT int_array ( #PCDATA ) >
+<!ATTLIST int_array count NMTOKEN #REQUIRED >
+<!ATTLIST int_array id CDATA #REQUIRED >
+
+<!ELEMENT geometry ( mesh | spline | extra )+ >
+<!ATTLIST geometry id CDATA #REQUIRED >
+<!ATTLIST geometry name CDATA #REQUIRED >
+
+<!ELEMENT image ( init_from ) >
+<!ATTLIST image id CDATA #REQUIRED >
+<!ATTLIST image name CDATA #IMPLIED >
+
+<!ELEMENT init_from ( #PCDATA ) >
+
+<!ELEMENT input EMPTY >
+<!ATTLIST input offset NMTOKEN #IMPLIED >
+<!ATTLIST input semantic NMTOKEN #REQUIRED >
+<!ATTLIST input source CDATA #REQUIRED >
+
+<!ELEMENT instance_camera EMPTY >
+<!ATTLIST instance_camera url CDATA #REQUIRED >
+
+<!ELEMENT instance_effect ( setparam )* >
+<!ATTLIST instance_effect url CDATA #REQUIRED >
+
+<!ELEMENT instance_geometry ( bind_material? ) >
+<!ATTLIST instance_geometry url CDATA #REQUIRED >
+
+<!ELEMENT instance_material ( bind_vertex_input? ) >
+<!ATTLIST instance_material symbol CDATA #REQUIRED >
+<!ATTLIST instance_material target CDATA #REQUIRED >
+
+<!ELEMENT instance_light EMPTY >
+<!ATTLIST instance_light url CDATA #REQUIRED >
+
+<!ELEMENT instance_visual_scene EMPTY >
+<!ATTLIST instance_visual_scene url CDATA #REQUIRED >
+
+<!ELEMENT library_cameras ( camera )+ >
+
+<!ELEMENT library_effects ( effect )+ >
+
+<!ELEMENT library_images ( image )+ >
+
+<!ELEMENT library_geometries ( geometry )+ >
+
+<!ELEMENT library_lights ( light )+ >
+
+<!ELEMENT library_materials ( material )+ >
+
+<!ELEMENT library_visual_scenes ( visual_scene ) >
+
+<!ELEMENT light ( technique_common | extra )+ >
+<!ATTLIST light id CDATA #REQUIRED >
+<!ATTLIST light name CDATA #REQUIRED >
+
+<!ELEMENT linear_attenuation ( #PCDATA ) >
+
+<!ELEMENT lookat ( #PCDATA ) >
+
+<!ELEMENT magfilter ( #PCDATA ) >
+
+<!ELEMENT material ( instance_effect )+ >
+<!ATTLIST material id CDATA #REQUIRED >
+<!ATTLIST material name CDATA #REQUIRED >
+
+<!ELEMENT mesh ( source | vertices | triangles | polygons )+ >
+
+<!ELEMENT minfilter ( #PCDATA ) >
+
+<!ELEMENT profile_COMMON ( newparam | technique )+ >
+
+<!ELEMENT spline ( source | control_vertices )+ >
+
+<!ELEMENT modified ( #PCDATA ) >
+
+<!ELEMENT node ( translate | rotate | scale | instance_light | extra | instance_geometry | instance_camera | node )* >
+<!ATTLIST node id CDATA #REQUIRED >
+<!ATTLIST node name CDATA #REQUIRED >
+<!ATTLIST node layer CDATA #IMPLIED >
+
+<!ELEMENT optics ( technique_common ) >
+
+<!ELEMENT orthographic ( xmag, ymag, znear, zfar ) >
+
+<!ELEMENT p ( #PCDATA ) >
+
+<!ELEMENT param ( #PCDATA ) >
+<!ATTLIST param count NMTOKEN #IMPLIED >
+<!ATTLIST param name CDATA #REQUIRED >
+<!ATTLIST param type ( Name | boolean | float | float3 | float4 | int | URL ) #REQUIRED >
+
+<!ELEMENT perspective ( yfov, znear, zfar ) >
+
+<!ELEMENT phong ( ambient | emission | diffuse | specular | shininess | reflective | reflectivity | transparent | transparency )+ >
+
+<!ELEMENT ambient ( color ) >
+
+<!ELEMENT diffuse ( color | texcoord | texture )+ >
+
+<!ELEMENT emission ( color ) >
+
+<!ELEMENT specular ( color ) >
+
+<!ELEMENT shininess ( float ) >
+
+<!ELEMENT reflective ( color ) >
+
+<!ELEMENT reflectivity ( float ) >
+
+<!ELEMENT transparent ( color ) >
+
+<!ELEMENT transparency ( float ) >
+
+<!ELEMENT point ( color, constant_attenuation, linear_attenuation, quadratic_attenuation ) >
+
+<!ELEMENT polygons ( input+, p+, extra? ) >
+<!ATTLIST polygons count NMTOKEN #REQUIRED >
+<!ATTLIST polygons material CDATA #IMPLIED >
+
+<!ELEMENT program ( param )+ >
+<!ATTLIST program id CDATA #IMPLIED >
+<!ATTLIST program url CDATA #IMPLIED >
+
+<!ELEMENT quadratic_attenuation ( #PCDATA ) >
+
+<!ELEMENT renderer ( param+ ) >
+<!ATTLIST renderer class CDATA #REQUIRED >
+
+<!ELEMENT rendererset ( param+, renderer+ ) >
+<!ATTLIST rendererset current_renderer CDATA #REQUIRED >
+<!ATTLIST rendererset last_renderer CDATA #IMPLIED >
+
+<!ELEMENT revision ( #PCDATA ) >
+
+<!ELEMENT rotate ( #PCDATA ) >
+<!ATTLIST rotate sid CDATA #IMPLIED >
+
+<!ELEMENT sampler2D ( source | minfilter | magfilter )+ >
+
+<!ELEMENT scale ( #PCDATA ) >
+<!ATTLIST scale sid CDATA #IMPLIED >
+
+<!ELEMENT scene ( instance_visual_scene ) >
+
+<!ELEMENT scene_settings ( param+ ) >
+
+<!ELEMENT setparam ( bool | float3 | float )? >
+<!ATTLIST setparam ref CDATA #REQUIRED >
+
+<!ELEMENT source ( #PCDATA | Name_array | int_array | float_array | technique_common | technique )* >
+<!ATTLIST source id CDATA #IMPLIED >
+
+<!ELEMENT spot ( color | constant_attenuation | linear_attenuation | falloff_angle )+ >
+
+<!ELEMENT surface ( init_from | format )+ >
+<!ATTLIST surface type NMTOKEN #REQUIRED >
+
+<!ELEMENT technique ( E3DPanel | phong | param | program | rendererset | scene_settings )* >
+<!ATTLIST technique profile NMTOKEN #FIXED "EQUINOX-3D" >
+<!ATTLIST technique id CDATA #IMPLIED >
+<!ATTLIST technique sid CDATA #IMPLIED >
+
+<!ELEMENT technique_common ( accessor | orthographic | perspective | point | instance_material | spot )* >
+
+<!ELEMENT texture EMPTY >
+<!ATTLIST texture texcoord CDATA #REQUIRED >
+<!ATTLIST texture texture CDATA #REQUIRED >
+
+<!ELEMENT translate ( #PCDATA ) >
+<!ATTLIST translate sid CDATA #IMPLIED >
+
+<!ELEMENT triangles ( input | p | extra )+ >
+<!ATTLIST triangles count NMTOKEN #REQUIRED >
+
+<!ELEMENT vertices ( input ) >
+<!ATTLIST vertices id CDATA #REQUIRED >
+
+<!ELEMENT control_vertices ( input )+ >
+
+<!ELEMENT unit EMPTY >
+<!ATTLIST unit meter CDATA #REQUIRED >
+<!ATTLIST unit name CDATA #REQUIRED >
+
+<!ELEMENT up_axis ( #PCDATA ) >
+
+<!ELEMENT viewmode ( lookat, camera ) >
+<!ATTLIST viewmode type ( ANIMATION | FRONT | PERSPECTIVE | RIGHT | SCHEMATICS | TEXTURE | TOP ) #REQUIRED >
+
+<!ELEMENT visual_scene ( node+ ) >
+<!ATTLIST visual_scene id CDATA #REQUIRED >
+<!ATTLIST visual_scene name CDATA #IMPLIED >
+
+<!ELEMENT xmag ( #PCDATA ) >
+
+<!ELEMENT yfov ( #PCDATA ) >
+
+<!ELEMENT ymag ( #PCDATA ) >
+
+<!ELEMENT zfar ( #PCDATA ) >
+
+<!ELEMENT znear ( #PCDATA ) >
+
