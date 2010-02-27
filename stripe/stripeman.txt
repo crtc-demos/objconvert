@@ -1,0 +1,87 @@
+
+NAME
+stripe - converts a .obj file to a .objf file.
+(converts a polygonal model to triangle strips)
+
+SYNOPSIS
+stripe [options] [file.obj]
+
+DESCRIPTION
+
+The purpose of stripe is to speed up rendering time by converting a
+polygonal model to triangle strips. This manual describes the implementation
+of stripe, which was written by Francine Evans under the guidance of Steven
+Skiena and Amitabh Varshney, SUNY at Stony Brook.
+
+Stripe's input is a .obj file in binary or ascii (default) and its output is
+a objf file in ascii, which contains the model represented by triangle
+strips. You can then use the objf file to render the model. We provide a
+viewer called viewobjf which uses opengl to render the model.
+
+There are two phases to stripe: a global and local phase. In the first
+phase, the global phase, stripe finds patches of quadrilaterals and converts
+them to triangle strips, while also trying to extend off of the ends of the
+patches. stripe works especially well with models with quadrilaterals, since
+there will be many patches, and the patches form good sequential triangle
+strips. However, stripe does not only work with models containing
+quadrilaterals. It works on any model consisting of polygons.
+
+The second phase, the local phase, uses a local algorithm to determine
+strips on the polygons that are left after the global phase cannot find any
+more suitable patches. This local algorithm uses adjacency information to
+determine which polygon to use next in a strip, and also triangulates the
+polygons on the fly to produce better strips.
+
+The default options are the options that we observed to work the best. You
+can specify different options other than the ones that are set as the
+default, or simply leave off any options to use the ones that we found to be
+the best.
+
+OPTIONS
+-a  In case there is a tie as to choosing the next polygon in a strip
+    during the local phase, this option will alternate left-right direction
+    in choosing the next polygon in a strip during successive tie-breaks.
+-b  This specifies that the input file is in binary.
+-f  In case there is a tie as to choosing the next polygin in a strip
+    during the local phase, this option will simply choose the first
+    polygon that it found.
+-g  This option specifies to find triangle strips only within the groups
+    that are specified in the data file.
+-l  In case there is a tie as to choosing the next polygon in a strip
+    during the local phase, this option will look ahead to the next level:
+    it will examine the neighbors of each of the polygon's that tied and
+    choose the next polygon in the strip based on which one has the best
+    neighbor to put in the strip at the next evel.
+-o  This option allows you to turn off Stripes orientation 
+    checking algorithm.
+-p  This option specifies that during the local phase we will be partially
+    triangulating faces when we use them in a strip, saving the rest of the
+    face for later and only using what we need for the current strip. This
+    is the default option, if no triangulation option is specified.
+-q  In case there is a tie as to choosing the next polygon in a strip
+    during the local phase, this option will choose the next face that does
+    not produce a swap (degenerate triangle). If this is not
+    possible, then the lookahead method is used (option -l). This is the
+    default option for tie breaking, if no tie breaking option is
+    specified.
+-r  In case there is a tie as to choosing the next polygon in a strip
+    during the local phase, this option will randomly choose the next face
+    from the list of tied faces.
+-w  This option specifies that during the local phase we will be fully
+    triangulating a face as we come to it in a strip, without saving any of
+    it for another strip.
+
+SEE ALSO
+viewobjf(1)
+
+BUGS
+Stripe assumes models consisting of convex polygons.
+Stripe assumes no more than 254 characters on a line.
+Stripe assumes polygons of 3 sides or greater.
+Stripe assumes that your file system supports extensions greater than 3.
+Please report any bugs to stripe@cs.sunysb.edu
+
+AUTHOR
+This manual page contributed by Francine Evans of Stony Brook University. It
+has been reviewed by Steven Skiena and Amitabh Varshney of Stony Brook
+University.

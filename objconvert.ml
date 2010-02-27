@@ -1,5 +1,7 @@
 (* Nasty program to scrape data out of Collada "dae"-like files.  *)
 
+open Genlex
+
 exception Unknown_node of string
 
 let (float_arrays : (string, float array) Hashtbl.t) = Hashtbl.create 5
@@ -737,6 +739,285 @@ let print_geometries geometries =
 	poly.polys)
     geometries
 
+let geometry_list geometries =
+  List.fold_right
+    (fun poly geoms ->
+      if not (List.mem poly.geometry geoms) then
+	poly.geometry :: geoms
+      else
+	geoms)
+    geometries
+    []
+
+let vertices_for_geometry geometries which =
+  List.fold_right
+    (fun poly vert_src ->
+      if poly.geometry = which then begin
+        match poly.vertex with
+	  Some (name, offset) ->
+	    if not (List.mem name vert_src) then
+	      name :: vert_src
+	    else
+	      vert_src
+	| None -> vert_src
+      end else
+        vert_src)
+    geometries
+    []
+
+let normals_for_geometry geometries which =
+  List.fold_right
+    (fun poly vert_src ->
+      if poly.geometry = which then begin
+        match poly.normal with
+	  Some (name, offset) ->
+	    if not (List.mem name vert_src) then
+	      name :: vert_src
+	    else
+	      vert_src
+	| None -> vert_src
+      end else
+        vert_src)
+    geometries
+    []
+
+let emit_obj fo geometries geom =
+  let sources = vertices_for_geometry geometries geom in
+  List.iter
+    (fun source ->
+      Printf.fprintf fo "# geometry %s, source %s\n" geom source;
+      let v_array = Hashtbl.find vertices source in
+      for i = 0 to Array.length v_array - 1 do
+	Printf.fprintf fo "v %f %f %f\n" v_array.(i).x v_array.(i).y
+	  v_array.(i).z
+      done)
+    sources;
+  let nsources = normals_for_geometry geometries geom in
+  List.iter
+    (fun source ->
+      Printf.fprintf fo "# geometry %s, source %s\n" geom source;
+      let _, _, norm_accessor = Hashtbl.find accessors source in
+      let i = ref 0 in
+      try
+	while true do
+	  Printf.fprintf fo "vn %f %f %f\n" (norm_accessor !i `x)
+	    (norm_accessor !i `y) (norm_accessor !i `z);
+	  incr i
+	done
+      with Invalid_argument _ ->
+	())
+    nsources;
+  List.iter
+    (fun poly ->
+      if poly.geometry = geom then begin
+	let stride = poly_stride poly in
+	List.iter
+	  (fun idx_array ->
+	    let points = (Array.length idx_array) / stride in
+	    Printf.fprintf fo "f";
+	    for idx = 0 to points - 1 do
+	      let vtx = match poly.vertex with
+		Some (_, offset) ->
+		  string_of_int (1 + idx_array.(idx * stride + offset))
+	      | None -> "" in
+	      let nrm = match poly.normal with
+		Some (_, offset) ->
+		  string_of_int (1 + idx_array.(idx * stride + offset))
+	      | None -> "" in
+	      Printf.fprintf fo " %s//%s" vtx nrm
+	    done;
+	    Printf.fprintf fo "\n")
+	  poly.polys
+      end)
+    geometries
+
+let objf_lexer = Genlex.make_lexer ["v"; "vn"; "t"; "q"; "//"; "/"]
+
+let all_strips = ref []
+let accum = ref []
+let verts = ref []
+let norms = ref []
+
+let rec objf_parse_line = parser
+    [< 'Kwd "v"; 'Float vx; 'Float vy; 'Float vz >] ->
+      verts := (vx, vy, vz) :: !verts
+  | [< 'Kwd "vn"; 'Float nx; 'Float ny; 'Float nz >] ->
+      norms := (nx, ny, nz) :: !norms
+  | [< 'Kwd "t"; args = list_of_ints >] ->
+      if !accum <> [] then
+        all_strips := !accum :: !all_strips;
+      accum := args
+  | [< 'Kwd "q"; args = list_of_ints >] ->
+      accum := !accum @ args
+and list_of_ints = parser
+    [< 'Int i; 'Kwd "//"; 'Int n; rest = list_of_ints >] ->
+      (i, n) :: rest
+  | [< >] -> []
+
+let reload_objf fi =
+  try
+    while true do
+      let line = input_line fi in
+      if String.length line > 0 && line.[0] <> '#' then
+	objf_parse_line (objf_lexer (Stream.of_string line))
+    done;
+    raise End_of_file
+  with End_of_file ->
+    if !accum <> [] then
+      all_strips := !accum :: !all_strips;
+    !all_strips
+
+(* Output format:
+     strip <int>
+     verts
+     <float> <float> <float>
+     <float> <float> <float>
+     ...
+     norms
+     <float> <float> <float>
+     ...
+     texcoords
+     <float> <float>
+     ...
+     end
+*)
+
+let strip_geometries geometries =
+  let glist = geometry_list geometries in
+  List.iter
+    (fun geom ->
+      all_strips := [];
+      accum := [];
+      verts := [];
+      norms := [];
+      let fo = open_out "test.obj" in
+      emit_obj fo geometries geom;
+      close_out fo;
+      Sys.remove "test.objf";
+      ignore (Sys.command "stripe/stripe -w test.obj");
+      let fi = open_in "test.objf" in
+      let strips = reload_objf fi in
+      ignore strips;
+      close_in fi;
+      let v_arr = Array.of_list (List.rev !verts) in
+      let n_arr = Array.of_list (List.rev !norms) in
+      let outf = open_out "out.stp" in
+      List.iter
+        (fun strip ->
+	  Printf.fprintf outf "strip %d\n" (List.length strip);
+	  Printf.fprintf outf "verts\n";
+	  List.iter
+	    (fun (v, _) ->
+	      let (x, y, z) = v_arr.(v - 1) in
+	      Printf.fprintf outf "%f %f %f\n" x y z)
+	    strip;
+	  Printf.fprintf outf "norms\n";
+	  List.iter
+	    (fun (_, n) ->
+	      let (x, y, z) = n_arr.(n - 1) in
+	      Printf.fprintf outf "%f %f %f\n" x y z)
+	    strip;
+	  Printf.fprintf outf "end\n")
+	!all_strips;
+      close_out outf)
+    glist
+
+let add_if_different vx vy vz nx ny nz counted =
+  let epsilon = 0.0001 in
+  let rec scan idx = function
+    (vx', vy', vz', nx', ny', nz') :: more ->
+      if abs_float (vx' -. vx) <= epsilon
+         && abs_float (vy' -. vy) <= epsilon
+	 && abs_float (vz' -. vz) <= epsilon
+	 && abs_float (nx' -. nx) <= epsilon
+	 && abs_float (ny' -. ny) <= epsilon
+	 && abs_float (nz' -. nz) <= epsilon then
+	idx
+      else
+        scan (idx - 1) more
+  | _ -> raise Not_found in
+  try
+    let idx = scan (List.length counted - 1) counted in
+    idx, counted
+  with Not_found ->
+    let idx = List.length counted in
+    idx, (vx, vy, vz, nx, ny, nz) :: counted
+
+let strip_geometries_alt geometries =
+  let glist = geometry_list geometries in
+  List.iter
+    (fun geom ->
+      let counted = ref []
+      and triangle_indices = ref [] in
+      List.iter
+	(fun poly ->
+	  if poly.geometry = geom then begin
+	    let stride = poly_stride poly in
+	    List.iter
+	      (fun idx_array ->
+	        let points = (Array.length idx_array) / stride in
+		begin match poly.vertex, poly.normal with
+		  Some (vname, voffset), Some (nname, noffset) ->
+		    let v_array = Hashtbl.find vertices vname in
+		    let _, _, norm_accessor = Hashtbl.find accessors nname in
+		    let face = Array.create points (-1) in
+		    for idx = 0 to points - 1 do
+		      let vpos = idx_array.(idx * stride + voffset)
+		      and npos = idx_array.(idx * stride + noffset) in
+		      let vidx, new_counted = add_if_different
+		        v_array.(vpos).x v_array.(vpos).y v_array.(vpos).z
+			(norm_accessor npos `x) (norm_accessor npos `y)
+			(norm_accessor npos `z) !counted in
+		      face.(idx) <- vidx;
+		      counted := new_counted
+		    done;
+		    begin match points with
+		      3 ->
+		        (*  1
+			   0 2 *)
+			triangle_indices :=
+		          face.(1) :: face.(0) :: face.(2) :: !triangle_indices
+		    | 4 ->
+		        (* 1 2
+			   0 3 *)
+			triangle_indices :=
+			  face.(1) :: face.(0) :: face.(2) :: !triangle_indices;
+			triangle_indices :=
+			  face.(2) :: face.(0) :: face.(3) :: !triangle_indices
+		    | _ ->
+		      Printf.fprintf stderr
+		        "Warning: found difficult polygon (%d)\n" points
+		    end
+		| _ -> ();
+		end)
+	      poly.polys;
+	  end)
+	geometries;
+      let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
+      let unique_arr = Array.of_list (List.rev !counted) in
+      let fo = open_out "out.stp" in
+      List.iter
+        (fun slist ->
+	  let rev_slist = List.rev slist in
+	  Printf.fprintf fo "strip %d\n" (List.length slist);
+	  Printf.fprintf fo "verts\n";
+	  List.iter
+	    (fun i ->
+	      let (vx, vy, vz, _, _, _) = unique_arr.(i) in
+	      Printf.fprintf fo "%f %f %f\n" vx vy vz)
+	    rev_slist;
+	  Printf.fprintf fo "norms\n";
+	  List.iter
+	    (fun i ->
+	      let (_, _, _, nx, ny, nz) = unique_arr.(i) in
+	      Printf.fprintf fo "%f %f %f\n" nx ny nz)
+	    rev_slist;
+	  Printf.fprintf fo "end\n")
+	strips_out;
+      close_out fo)
+    glist
+
+
 let strip_blank_data doc_root =
   let is_blank foo =
     let all_blank = ref true in
@@ -773,4 +1054,5 @@ let _ =
   List.iter (fun x -> x ()) !do_later;
   do_later := [];
   (* print_vertices vertices; *)
-  print_geometries !geometries
+  (* print_geometries !geometries *)
+  strip_geometries_alt !geometries
