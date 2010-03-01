@@ -66,17 +66,31 @@ bool Striper::Init(STRIPERCREATE& create)
 	// Create adjacencies
 	{
 		mAdj = new Adjacencies;
-		if(!mAdj)	return false;
+		if(!mAdj)
+		  {
+		    fprintf (stderr, "No adjacencies.\n");
+		    return false;
+		  }
 
 		ADJACENCIESCREATE ac;
 		ac.NbFaces	= create.NbFaces;
 		ac.DFaces	= create.DFaces;
 		ac.WFaces	= create.WFaces;
 		bool Status = mAdj->Init(ac);
-		if(!Status)	{ RELEASE(mAdj); return false; }
+		if(!Status)
+		  {
+		    RELEASE(mAdj);
+		    fprintf (stderr, "Bad status (1)\n");
+		    return false;
+		  }
 
 		Status = mAdj->CreateDatabase();
-		if(!Status)	{ RELEASE(mAdj); return false; }
+		if(!Status)
+		  {
+		    RELEASE(mAdj);
+		    fprintf (stderr, "Bad status (2)\n");
+		    return false;
+		  }
 
 		mAskForWords		= create.AskForWords;
 		mOneSided			= create.OneSided;
@@ -98,13 +112,25 @@ bool Striper::Init(STRIPERCREATE& create)
 bool Striper::Compute(STRIPERRESULT& result)
 {
 	// You must call Init() first
-	if(!mAdj)	return false;
+	if(!mAdj)
+	  return false;
 
 	// Get some bytes
-	mStripLengths			= new CustomArray;				if(!mStripLengths)	return false;
-	mStripRuns				= new CustomArray;				if(!mStripRuns)		return false;
-	mTags					= new bool[mAdj->mNbFaces];		if(!mTags)			return false;
-	udword* Connectivity	= new udword[mAdj->mNbFaces];	if(!Connectivity)	return false;
+	mStripLengths = new CustomArray;
+	if(!mStripLengths)
+	  return false;
+
+	mStripRuns = new CustomArray;
+	if(!mStripRuns)
+	  return false;
+
+	mTags = new bool[mAdj->mNbFaces];
+	if(!mTags)
+	  return false;
+
+	udword* Connectivity = new udword[mAdj->mNbFaces];
+	if(!Connectivity)
+	  return false;
 
 	// mTags contains one bool/face. True=>the face has already been included in a strip
 	ZeroMemory(mTags, mAdj->mNbFaces*sizeof(bool));
@@ -161,7 +187,7 @@ bool Striper::Compute(STRIPERRESULT& result)
 	result.NbStrips		= mNbStrips;
 	result.StripLengths	= (udword*)	mStripLengths	->Collapse();
 	result.StripRuns	=			mStripRuns		->Collapse();
-
+	
 	if(mConnectAllStrips)	ConnectAllStrips(result);
 
 	return true;

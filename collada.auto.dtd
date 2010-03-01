@@ -79,7 +79,7 @@
 
 <!ELEMENT geometry ( mesh | spline | extra )+ >
 <!ATTLIST geometry id CDATA #REQUIRED >
-<!ATTLIST geometry name CDATA #REQUIRED >
+<!ATTLIST geometry name CDATA #IMPLIED >
 
 <!ELEMENT image ( init_from ) >
 <!ATTLIST image id CDATA #REQUIRED >
@@ -139,7 +139,7 @@
 <!ATTLIST material id CDATA #REQUIRED >
 <!ATTLIST material name CDATA #REQUIRED >
 
-<!ELEMENT mesh ( source | vertices | triangles | polygons )+ >
+<!ELEMENT mesh ( source | vertices | triangles | polygons | polylist )+ >
 
 <!ELEMENT minfilter ( #PCDATA ) >
 
@@ -169,6 +169,8 @@
 
 <!ELEMENT phong ( ambient | emission | diffuse | specular | shininess | reflective | reflectivity | transparent | transparency )+ >
 
+<!ELEMENT lambert ( ambient | diffuse )+ >
+
 <!ELEMENT ambient ( color ) >
 
 <!ELEMENT diffuse ( color | texcoord | texture )+ >
@@ -192,6 +194,10 @@
 <!ELEMENT polygons ( input+, p+, extra? ) >
 <!ATTLIST polygons count NMTOKEN #REQUIRED >
 <!ATTLIST polygons material CDATA #IMPLIED >
+
+<!ELEMENT polylist ( input | vcount | p )+ >
+<!ATTLIST polylist count NMTOKEN #REQUIRED >
+<!ATTLIST polylist material CDATA #IMPLIED >
 
 <!ELEMENT program ( param )+ >
 <!ATTLIST program id CDATA #IMPLIED >
@@ -231,7 +237,7 @@
 <!ELEMENT surface ( init_from | format )+ >
 <!ATTLIST surface type NMTOKEN #REQUIRED >
 
-<!ELEMENT technique ( E3DPanel | phong | param | program | rendererset | scene_settings )* >
+<!ELEMENT technique ( E3DPanel | phong | lambert | param | program | rendererset | scene_settings )* >
 <!ATTLIST technique profile NMTOKEN #FIXED "EQUINOX-3D" >
 <!ATTLIST technique id CDATA #IMPLIED >
 <!ATTLIST technique sid CDATA #IMPLIED >
@@ -247,9 +253,12 @@
 
 <!ELEMENT triangles ( input | p | extra )+ >
 <!ATTLIST triangles count NMTOKEN #REQUIRED >
+<!ATTLIST triangles material CDATA #IMPLIED >
 
 <!ELEMENT vertices ( input ) >
 <!ATTLIST vertices id CDATA #REQUIRED >
+
+<!ELEMENT vcount ( #PCDATA ) >
 
 <!ELEMENT control_vertices ( input )+ >
 

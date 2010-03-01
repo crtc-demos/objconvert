@@ -143,9 +143,24 @@ bool Adjacencies::CreateDatabase()
 
 	RadixSorter Core;
 
-	udword* FaceNb = new udword[mNbEdges];	if(!FaceNb)	return false;
-	udword* VRefs0 = new udword[mNbEdges];	if(!VRefs0)	return false;
-	udword* VRefs1 = new udword[mNbEdges];	if(!VRefs1)	return false;
+	udword* FaceNb = new udword[mNbEdges];
+	if(!FaceNb)
+	  {
+	    fprintf (stderr, "FaceNb\n");
+	    return false;
+	  }
+	udword* VRefs0 = new udword[mNbEdges];
+	if(!VRefs0)
+	  {
+	    fprintf (stderr, "VRefs0\n");
+	    return false;
+	  }
+	udword* VRefs1 = new udword[mNbEdges];
+	if(!VRefs1)
+	  {
+	    fprintf (stderr, "VRefs1\n");
+	    return false;
+	  }
 
 	for(udword i=0;i<mNbEdges;i++)
 	{
@@ -177,6 +192,7 @@ bool Adjacencies::CreateDatabase()
 				RELEASEARRAY(VRefs1);
 				RELEASEARRAY(VRefs0);
 				RELEASEARRAY(FaceNb);
+				fprintf (stderr, "Non-manifold.\n");
 				return false;				// Only works with manifold meshes (i.e. an edge is not shared by more than 2 triangles)
 			}
 		}

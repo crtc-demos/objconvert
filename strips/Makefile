@@ -1,3 +1,6 @@
+	CFLAGS = -g -O0 -Wall -fno-strict-aliasing
+	LDFLAGS = -g
+
 	SRC = Adjacency.cpp RevisitedRadix.cpp Striper.cpp CustomArray.cpp \
 	      StdAfx.cpp CamlStrips.cpp
 
@@ -11,13 +14,13 @@
 all:	$(LIB)
 
 $(TARGET): $(OBJS)
-	g++ -shared -fPIC -DPIC $(OBJS) -o $@
+	g++ $(LDFLAGS) -shared -fPIC -DPIC $(OBJS) -o $@
 
 $(LIB):	$(TARGET) strips.cmo
 	ocamlc -a -o $(LIB) strips.cmo -dllib -lstrips
 
 %.o:	%.cpp
-	g++ -shared -fPIC -DPIC -O2 -c $< -o $@
+	g++ $(CFLAGS) -shared -fPIC -DPIC -c $< -o $@
 
 %.cmo:	%.ml
 	ocamlc -c $< -o $@

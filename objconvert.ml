@@ -34,6 +34,7 @@ let (vertices : (string, vertex array) Hashtbl.t) = Hashtbl.create 5
 type poly_type =
     Polygons
   | Triangles
+  | Polylist
 
 type polygon =
   {
@@ -44,6 +45,7 @@ type polygon =
     mutable uv : (string * int) option;
     mutable polys : int array list;
     mutable poly_type : poly_type;
+    mutable vcount : int list;
     mutable material : string option
   }
 
@@ -70,6 +72,12 @@ and phong =
     mutable reflectivity : float option;
     mutable transparent : colour option;
     mutable transparency : float option
+  }
+
+and lambert =
+  {
+    mutable l_ambient : colour option;
+    mutable l_diffuse : covering option
   }
 
 and colour =
@@ -311,6 +319,19 @@ let parse_float node =
   end;
   !myfloat
 
+let parse_covering covering =
+  match covering#node_type with
+    Pxp_document.T_element "texture" ->
+      let texcoord
+	= covering#required_string_attribute "texcoord"
+      and texture
+	= covering#required_string_attribute "texture" in
+      Texture { t_texcoord = texcoord; t_texture = texture }
+  | Pxp_document.T_element "color" ->
+      let col = parse_colour covering in
+      Colour col
+  | _ -> bad_node covering "covering"
+
 let parse_phong id phong_parts =
   let phonginf =
     {
@@ -330,21 +351,7 @@ let parse_phong id phong_parts =
         Pxp_document.T_element "ambient" ->
 	  phonginf.ambient <- Some (parse_colour (node_child node))
       | Pxp_document.T_element "diffuse" ->
-          node#iter_nodes
-	    (fun diffuse_node ->
-	      match diffuse_node#node_type with
-	        Pxp_document.T_element "texture" ->
-		  let texcoord
-		    = diffuse_node#required_string_attribute "texcoord"
-		  and texture
-		    = diffuse_node#required_string_attribute "texture" in
-		  phonginf.diffuse
-		    <- Some (Texture { t_texcoord = texcoord;
-				       t_texture = texture })
-	      | Pxp_document.T_element "color" ->
-	          let col = parse_colour diffuse_node in
-		  phonginf.diffuse <- Some (Colour col)
-	      | _ -> bad_node diffuse_node "below diffuse")
+          phonginf.diffuse <- Some (parse_covering (node_child node))
       | Pxp_document.T_element "specular" ->
 	  phonginf.specular <- Some (parse_colour (node_child node))
       | Pxp_document.T_element "shininess" ->
@@ -362,12 +369,30 @@ let parse_phong id phong_parts =
       | _ -> bad_node node "below phong")
     phong_parts
 
+let parse_lambert id lambert_parts =
+  let lambertinf =
+    {
+      l_ambient = None;
+      l_diffuse = None
+    } in
+  List.iter
+    (fun node ->
+      match node#node_type with
+        Pxp_document.T_element "ambient" ->
+	  lambertinf.l_ambient <- Some (parse_colour (node_child node))
+      | Pxp_document.T_element "diffuse" ->
+          lambertinf.l_diffuse <- Some (parse_covering (node_child node))
+      | _ -> bad_node node "below lambert")
+    lambert_parts
+
 let parse_technique id sid nodes =
   List.iter
     (fun node ->
       match node#node_type with
         Pxp_document.T_element "phong" ->
 	  parse_phong id node#sub_nodes
+      | Pxp_document.T_element "lambert" ->
+          parse_lambert id node#sub_nodes
       | Pxp_document.T_element "program" ->
           (* Ignore. *)
           ()
@@ -454,7 +479,8 @@ let parse_polygons geom_id count poly_nodes ~poly_type ~material =
   and normal = ref None
   and texcoord = ref None
   and uv = ref None
-  and polys = ref [] in
+  and polys = ref []
+  and vcount = ref [] in
   List.iter
     (fun poly_part ->
       match poly_part#node_type with
@@ -476,6 +502,10 @@ let parse_polygons geom_id count poly_nodes ~poly_type ~material =
 	  let idx_list = parse_int_list data in
 	  polys := (Array.of_list idx_list) :: !polys
       | Pxp_document.T_element "extra" -> ()
+      | Pxp_document.T_element "vcount" ->
+	  let data = poly_part#data in
+	  let idx_list = parse_int_list data in
+	  vcount := idx_list
       | _ -> raise (Unknown_node "below polygons"))
     poly_nodes;
   let poly =
@@ -487,6 +517,7 @@ let parse_polygons geom_id count poly_nodes ~poly_type ~material =
       uv = !uv;
       polys = !polys;
       poly_type = poly_type;
+      vcount = !vcount;
       material = material
     } in
   geometries := poly :: !geometries
@@ -513,6 +544,12 @@ let parse_mesh geom_id mesh_nodes =
 	  let icount = int_of_string count in
 	  parse_polygons geom_id icount mesh_part#sub_nodes ~poly_type:Triangles
 			 ~material:material
+      | Pxp_document.T_element "polylist" ->
+	  let count = mesh_part#required_string_attribute "count"
+	  and material = mesh_part#optional_string_attribute "material" in
+	  let icount = int_of_string count in
+	  parse_polygons geom_id icount mesh_part#sub_nodes ~poly_type:Polylist
+			 ~material:material
       | Pxp_document.T_element x -> raise (Unknown_node (x ^ " below mesh"))
       | _ -> raise (Unknown_node "below mesh"))
     mesh_nodes
@@ -538,7 +575,7 @@ let get_library_geometries root_node =
 	  match node#node_type with
 	    Pxp_document.T_element "geometry" ->
 	      let id = node#required_string_attribute "id"
-	      and name = node#required_string_attribute "name" in
+	      and name = node#optional_string_attribute "name" in
 	      parse_geometry id name node#sub_nodes
 	  | _ -> raise (Unknown_node "below library_geometries")))
     lib_geoms
@@ -923,7 +960,7 @@ let strip_geometries geometries =
     glist
 
 let add_if_different vx vy vz nx ny nz counted =
-  let epsilon = 0.0001 in
+  let epsilon = 0.000001 in
   let rec scan idx = function
     (vx', vy', vz', nx', ny', nz') :: more ->
       if abs_float (vx' -. vx) <= epsilon
@@ -943,6 +980,58 @@ let add_if_different vx vy vz nx ny nz counted =
     let idx = List.length counted in
     idx, (vx, vy, vz, nx, ny, nz) :: counted
 
+let add_polygons poly idx_array stride triangle_indices counted_pts =
+  let counted = ref counted_pts in
+  let points = (Array.length idx_array) / stride in
+  match poly.vertex, poly.normal with
+    Some (vname, voffset), Some (nname, noffset) ->
+      let v_array = Hashtbl.find vertices vname in
+      let _, _, norm_accessor = Hashtbl.find accessors nname in
+      let face = Array.create points (-1) in
+      for idx = 0 to points - 1 do
+	let vpos = idx_array.(idx * stride + voffset)
+	and npos = idx_array.(idx * stride + noffset) in
+	let vidx, new_counted = add_if_different
+	  v_array.(vpos).x v_array.(vpos).y v_array.(vpos).z
+	  (norm_accessor npos `x) (norm_accessor npos `y)
+	  (norm_accessor npos `z) !counted in
+	face.(idx) <- vidx;
+	counted := new_counted
+      done;
+      let newpoints = match points with
+	3 ->
+	  (*  1
+	     0 2 *)
+	  face.(1) :: face.(0) :: face.(2) :: triangle_indices
+      | 4 ->
+	  (* 1 2
+	     0 3 *)
+	  face.(2) :: face.(0) :: face.(3)
+	  :: face.(1) :: face.(0) :: face.(2) :: triangle_indices
+      | 5 ->
+          (*   2
+	     1   3
+	      0 4  *)
+	  face.(2) :: face.(1) :: face.(0)
+	  :: face.(4) :: face.(2) :: face.(0)
+	  :: face.(3) :: face.(2) :: face.(4) :: triangle_indices
+      | 7 ->
+	  (*   3
+	     2   4
+	    1     5
+	     0   6  *)
+	  face.(2) :: face.(1) :: face.(0)
+	  :: face.(2) :: face.(0) :: face.(3)
+	  :: face.(3) :: face.(0) :: face.(6)
+	  :: face.(4) :: face.(3) :: face.(6)
+	  :: face.(5) :: face.(4) :: face.(6) :: triangle_indices
+      | _ ->
+	Printf.fprintf stderr
+	  "Warning: found difficult polygon (%d sides)\n" points;
+	  triangle_indices in
+      newpoints, !counted
+  | _ -> triangle_indices, !counted
+
 let strip_geometries_alt geometries =
   let glist = geometry_list geometries in
   List.iter
@@ -955,41 +1044,37 @@ let strip_geometries_alt geometries =
 	    let stride = poly_stride poly in
 	    List.iter
 	      (fun idx_array ->
-	        let points = (Array.length idx_array) / stride in
-		begin match poly.vertex, poly.normal with
-		  Some (vname, voffset), Some (nname, noffset) ->
-		    let v_array = Hashtbl.find vertices vname in
-		    let _, _, norm_accessor = Hashtbl.find accessors nname in
-		    let face = Array.create points (-1) in
-		    for idx = 0 to points - 1 do
-		      let vpos = idx_array.(idx * stride + voffset)
-		      and npos = idx_array.(idx * stride + noffset) in
-		      let vidx, new_counted = add_if_different
-		        v_array.(vpos).x v_array.(vpos).y v_array.(vpos).z
-			(norm_accessor npos `x) (norm_accessor npos `y)
-			(norm_accessor npos `z) !counted in
-		      face.(idx) <- vidx;
+	        match poly.poly_type with
+		  Polygons ->
+		    let new_tri_indices, new_counted
+		      = add_polygons poly idx_array stride !triangle_indices
+				     !counted in
+		    triangle_indices := new_tri_indices;
+		    counted := new_counted
+		| Triangles ->
+		    let num_tris = (Array.length idx_array) / (stride * 3) in
+		    for tri = 0 to num_tris - 1 do
+		      let slice = Array.sub idx_array (tri * stride * 3)
+					    (stride * 3) in
+		      let new_tri_indices, new_counted
+		        = add_polygons poly slice stride !triangle_indices
+				       !counted in
+		      triangle_indices := new_tri_indices;
 		      counted := new_counted
-		    done;
-		    begin match points with
-		      3 ->
-		        (*  1
-			   0 2 *)
-			triangle_indices :=
-		          face.(1) :: face.(0) :: face.(2) :: !triangle_indices
-		    | 4 ->
-		        (* 1 2
-			   0 3 *)
-			triangle_indices :=
-			  face.(1) :: face.(0) :: face.(2) :: !triangle_indices;
-			triangle_indices :=
-			  face.(2) :: face.(0) :: face.(3) :: !triangle_indices
-		    | _ ->
-		      Printf.fprintf stderr
-		        "Warning: found difficult polygon (%d)\n" points
-		    end
-		| _ -> ();
-		end)
+		    done
+		| Polylist ->
+		    ignore (List.fold_left
+		      (fun from poly_len ->
+		        let slice = Array.sub idx_array from
+					      (poly_len * stride) in
+			let new_tri_indices, new_counted
+			  = add_polygons poly slice stride !triangle_indices
+					      !counted in
+			triangle_indices := new_tri_indices;
+			counted := new_counted;
+			from + poly_len * stride)
+		      0
+		      poly.vcount))
 	      poly.polys;
 	  end)
 	geometries;
@@ -1054,5 +1139,5 @@ let _ =
   List.iter (fun x -> x ()) !do_later;
   do_later := [];
   (* print_vertices vertices; *)
-  (* print_geometries !geometries *)
+  (* print_geometries !geometries; *)
   strip_geometries_alt !geometries

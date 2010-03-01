@@ -187,7 +187,7 @@ class CustomArray
 	struct CustomBlock{
 		CustomBlock()		{ Addy = null; }
 		~CustomBlock()		{ RELEASEARRAY(Addy); }
-		void*				Addy;						// Stored data
+		char*				Addy;						// Stored data
 		unsigned long		Size;						// Length of stored data
 		unsigned long		Max;						// Heap size
 	};
@@ -203,9 +203,9 @@ private:
 	CustomCell*				mCurrentCell;				// Current block cell
 	CustomCell*				mInitCell;					// First block cell
 
-	void*					mCollapsed;					// Possible collapsed buffer
-	void**					mAddresses;					// Stack to store addresses
-	void*					mLastAddress;				// Last address used in current block cell
+	char*					mCollapsed;					// Possible collapsed buffer
+	char**					mAddresses;					// Stack to store addresses
+	char*					mLastAddress;				// Last address used in current block cell
 	unsigned short			mNbPushedAddies;			// #saved addies
 	unsigned short			mNbAllocatedAddies;			// #allocated addies
 	unsigned char			mBitCount;
@@ -263,8 +263,8 @@ public:
 	unsigned long			GetOffset();
 	CustomArray&			Padd();
 	CustomArray&			LinkTo(CustomArray* array);
-	void*					GetAddress()	{ char* CurrentAddy = (char*)mCurrentCell->Item.Addy; CurrentAddy+=mCurrentCell->Item.Size; return CurrentAddy; }
-	void*					Collapse(void* userbuffer=null);
+	char*					GetAddress()	{ char* CurrentAddy = (char*)mCurrentCell->Item.Addy; CurrentAddy+=mCurrentCell->Item.Size; return CurrentAddy; }
+	char*					Collapse(char* userbuffer=null);
 
 	// Address methods
 	bool					PushAddress();

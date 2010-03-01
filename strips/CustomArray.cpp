@@ -16,7 +16,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructor
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CustomArray::CustomArray(unsigned long startsize, void* inputbuffer) : mNbPushedAddies(0), mNbAllocatedAddies(0), mBitCount(0), mBitMask(0), mAddresses(null), mCollapsed(null)
+CustomArray::CustomArray(unsigned long startsize, void* inputbuffer) : mCollapsed(null), mAddresses(null), mNbPushedAddies(0), mNbAllocatedAddies(0), mBitCount(0), mBitMask(0)
 {
 	// Initialize first export block
 	NewBlock(null, startsize);
@@ -34,7 +34,7 @@ CustomArray::CustomArray(unsigned long startsize, void* inputbuffer) : mNbPushed
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructor
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-CustomArray::CustomArray(const char* filename) : mNbPushedAddies(0), mNbAllocatedAddies(0), mBitCount(0), mBitMask(0), mAddresses(null), mCollapsed(null)
+CustomArray::CustomArray(const char* filename) : mCollapsed(null), mAddresses(null), mNbPushedAddies(0), mNbAllocatedAddies(0), mBitCount(0), mBitMask(0)
 {
 	// Catch the file's size to initialize first block
 	unsigned long StartSize = FileSize(filename);
@@ -107,7 +107,7 @@ CustomArray& CustomArray::NewBlock(CustomCell* previouscell, unsigned long size)
 	Cell->Item.Max = previouscell ? previouscell->Item.Max*2 : size;
 
 	// Get some bytes for this cell
-	Cell->Item.Addy = (void*)new ubyte[Cell->Item.Max];
+	Cell->Item.Addy = (char*)new ubyte[Cell->Item.Max];
 	Cell->Item.Size = 0;
 
 	mCurrentCell = Cell;
@@ -283,7 +283,7 @@ CustomArray& CustomArray::LinkTo(CustomArray* array)
 // Exception:	-
 // Remark	:	if you provide your destination buffer original bytes are copied into it, then it's safe using them.
 //				if you don't, returned address is valid until the array's destructor is called. Beware of memory corruption...
-void* CustomArray::Collapse(void* userbuffer)
+char* CustomArray::Collapse(char* userbuffer)
 {
 	// Fill possible remaining bits with 0
 	EndBits();
@@ -293,9 +293,9 @@ void* CustomArray::Collapse(void* userbuffer)
 
 	if(!userbuffer)
 	{
-		RELEASEARRAY(mCollapsed);						// Free possibly already collapsed array
+		RELEASEARRAY(mCollapsed);	// Free possibly already collapsed array
 		unsigned long CurrentSize = GetOffset();
-		mCollapsed = CurrentSize ? new ubyte[CurrentSize] : null;
+		mCollapsed = CurrentSize ? new char[CurrentSize] : null;
 		Addy = (char*)mCollapsed;
 	}
 	else
@@ -355,7 +355,7 @@ CustomArray& CustomArray::Store(BOOL Bo)
 
 	long* Current = (long*)CurrentAddy;
 	*Current=b;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(long);
 	return *this;
 }
@@ -382,7 +382,7 @@ CustomArray& CustomArray::Store(bool Bo)
 
 	char* Current = (char*)CurrentAddy;
 	*Current=b;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(char);
 	return *this;
 }
@@ -407,7 +407,7 @@ CustomArray& CustomArray::Store(char b)
 
 	char* Current = (char*)CurrentAddy;
 	*Current=b;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(char);
 	return *this;
 }
@@ -432,7 +432,7 @@ CustomArray& CustomArray::Store(unsigned char b)
 
 	unsigned char* Current = (unsigned char*)CurrentAddy;
 	*Current=b;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(unsigned char);
 	return *this;
 }
@@ -457,7 +457,7 @@ CustomArray& CustomArray::Store(short w)
 
 	short* Current = (short*)CurrentAddy;
 	*Current=w;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(short);
 	return *this;
 }
@@ -482,7 +482,7 @@ CustomArray& CustomArray::Store(unsigned short w)
 
 	unsigned short* Current = (unsigned short*)CurrentAddy;
 	*Current=w;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(unsigned short);
 	return *this;
 }
@@ -507,7 +507,7 @@ CustomArray& CustomArray::Store(long d)
 
 	long* Current = (long*)CurrentAddy;
 	*Current=d;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(long);
 	return *this;
 }
@@ -532,7 +532,7 @@ CustomArray& CustomArray::Store(unsigned long d)
 
 	unsigned long* Current = (unsigned long*)CurrentAddy;
 	*Current=d;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(unsigned long);
 	return *this;
 }
@@ -582,7 +582,7 @@ CustomArray& CustomArray::Store(unsigned int d)
 
 	unsigned int* Current = (unsigned int*)CurrentAddy;
 	*Current=d;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(unsigned int);
 	return *this;
 }
@@ -607,7 +607,7 @@ CustomArray& CustomArray::Store(float f)
 
 	float* Current = (float*)CurrentAddy;
 	*Current=f;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(float);
 	return *this;
 }
@@ -632,7 +632,7 @@ CustomArray& CustomArray::Store(double f)
 
 	double* Current = (double*)CurrentAddy;
 	*Current=f;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(double);
 	return *this;
 }
@@ -702,7 +702,7 @@ CustomArray& CustomArray::StoreASCIICode(char Code)
 CustomArray& CustomArray::StoreASCII(BOOL Bo)
 {
 	char Text[256];
-	sprintf(Text, "%d", (long)Bo);
+	sprintf(Text, "%ld", (long)Bo);
 	StoreASCII((const char*)Text);
 	return *this;
 }
@@ -797,7 +797,7 @@ CustomArray& CustomArray::StoreASCII(unsigned short w)
 CustomArray& CustomArray::StoreASCII(long d)
 {
 	char Text[256];
-	sprintf(Text, "%d", d);
+	sprintf(Text, "%ld", d);
 	StoreASCII((const char*)Text);
 	return *this;
 }
@@ -813,7 +813,7 @@ CustomArray& CustomArray::StoreASCII(long d)
 CustomArray& CustomArray::StoreASCII(unsigned long d)
 {
 	char Text[256];
-	sprintf(Text, "%u", d);
+	sprintf(Text, "%lu", d);
 	StoreASCII((const char*)Text);
 	return *this;
 }
@@ -935,7 +935,7 @@ bool CustomArray::PushAddress()
 		udword NewSize = mNbAllocatedAddies ? mNbAllocatedAddies * 2 : 1;
 
 		// Create new buffer...
-		void** Addresses = new void*[NewSize];
+		char** Addresses = new char*[NewSize];
 		if(!Addresses)	return false;
 
 		// ...copy & release old one to new one if old one exists...
@@ -1232,7 +1232,7 @@ char CustomArray::GetByte()
 
 	char* Current = (char*)CurrentAddy;
 	char result = *Current;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(char);
 	return result;
 }
@@ -1244,7 +1244,7 @@ short CustomArray::GetWord()
 
 	short* Current = (short*)CurrentAddy;
 	short result = *Current;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(short);
 	return result;
 }
@@ -1256,7 +1256,7 @@ long CustomArray::GetDword()
 
 	long* Current = (long*)CurrentAddy;
 	long result = *Current;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(long);
 	return result;
 }
@@ -1268,7 +1268,7 @@ float CustomArray::GetFloat()
 
 	float* Current = (float*)CurrentAddy;
 	float result = *Current;
-	mLastAddress = (void*)Current;
+	mLastAddress = (char*)Current;
 	mCurrentCell->Item.Size+=sizeof(float);
 	return result;
 }
