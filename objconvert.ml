@@ -1032,7 +1032,7 @@ let add_polygons poly idx_array stride triangle_indices counted_pts =
       newpoints, !counted
   | _ -> triangle_indices, !counted
 
-let strip_geometries_alt geometries =
+let strip_geometries_alt geometries outfile =
   let glist = geometry_list geometries in
   List.iter
     (fun geom ->
@@ -1080,7 +1080,7 @@ let strip_geometries_alt geometries =
 	geometries;
       let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
       let unique_arr = Array.of_list (List.rev !counted) in
-      let fo = open_out "out.stp" in
+      let fo = open_out outfile in
       List.iter
         (fun slist ->
 	  let rev_slist = List.rev slist in
@@ -1121,7 +1121,12 @@ let strip_blank_data doc_root =
 let _ =
   let config = Pxp_types.default_config
   and spec = Pxp_tree_parser.default_spec
-  and source = Pxp_types.from_file Sys.argv.(1) in
+  and source, dest =
+    try
+      Pxp_types.from_file Sys.argv.(1), Sys.argv.(2)
+    with _ ->
+      Printf.fprintf stderr "Usage: %s <in> <out>\n" Sys.argv.(0);
+      exit 1 in
   let dtd_source = Pxp_types.from_file "collada.auto.dtd" in
   let dtd = Pxp_dtd_parser.parse_dtd_entity config dtd_source in
   let doc = Pxp_tree_parser.parse_document_entity
