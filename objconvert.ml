@@ -959,16 +959,18 @@ let strip_geometries geometries =
       close_out outf)
     glist
 
-let add_if_different vx vy vz nx ny nz counted =
+let add_if_different vx vy vz nx ny nz tu tv counted =
   let epsilon = 0.000001 in
   let rec scan idx = function
-    (vx', vy', vz', nx', ny', nz') :: more ->
+    (vx', vy', vz', nx', ny', nz', tu', tv') :: more ->
       if abs_float (vx' -. vx) <= epsilon
          && abs_float (vy' -. vy) <= epsilon
 	 && abs_float (vz' -. vz) <= epsilon
 	 && abs_float (nx' -. nx) <= epsilon
 	 && abs_float (ny' -. ny) <= epsilon
-	 && abs_float (nz' -. nz) <= epsilon then
+	 && abs_float (nz' -. nz) <= epsilon
+	 && abs_float (tu' -. tu) <= epsilon
+	 && abs_float (tv' -. tv) <= epsilon then
 	idx
       else
         scan (idx - 1) more
@@ -978,11 +980,22 @@ let add_if_different vx vy vz nx ny nz counted =
     idx, counted
   with Not_found ->
     let idx = List.length counted in
-    idx, (vx, vy, vz, nx, ny, nz) :: counted
+    idx, (vx, vy, vz, nx, ny, nz, tu, tv) :: counted
+
+let have_texcoords = ref false
 
 let add_polygons poly idx_array stride triangle_indices counted_pts =
   let counted = ref counted_pts in
   let points = (Array.length idx_array) / stride in
+  let fetch_texcoords =
+    match poly.texcoord with
+      Some (tname, toffset) ->
+	let _, _, texc_accessor = Hashtbl.find accessors tname in
+	have_texcoords := true;
+	fun idx ->
+	  let tpos = idx_array.(idx * stride + toffset) in
+	  (texc_accessor tpos `s), (texc_accessor tpos `t)
+    | None -> fun idx -> 0.0, 0.0 in
   match poly.vertex, poly.normal with
     Some (vname, voffset), Some (nname, noffset) ->
       let v_array = Hashtbl.find vertices vname in
@@ -991,10 +1004,11 @@ let add_polygons poly idx_array stride triangle_indices counted_pts =
       for idx = 0 to points - 1 do
 	let vpos = idx_array.(idx * stride + voffset)
 	and npos = idx_array.(idx * stride + noffset) in
+	let s, t = fetch_texcoords idx in
 	let vidx, new_counted = add_if_different
 	  v_array.(vpos).x v_array.(vpos).y v_array.(vpos).z
 	  (norm_accessor npos `x) (norm_accessor npos `y)
-	  (norm_accessor npos `z) !counted in
+	  (norm_accessor npos `z) s t !counted in
 	face.(idx) <- vidx;
 	counted := new_counted
       done;
@@ -1033,9 +1047,13 @@ let add_polygons poly idx_array stride triangle_indices counted_pts =
   | _ -> triangle_indices, !counted
 
 let strip_geometries_alt geometries outfile =
+  have_texcoords := false;
   let glist = geometry_list geometries in
+  Printf.printf "Opening '%s' for output\n" outfile;
+  let fo = open_out outfile in
   List.iter
     (fun geom ->
+      Printf.printf "found geometry '%s'\n" geom;
       let counted = ref []
       and triangle_indices = ref [] in
       List.iter
@@ -1079,8 +1097,8 @@ let strip_geometries_alt geometries outfile =
 	  end)
 	geometries;
       let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
+      Printf.printf "strip output length: %d\n" (List.length strips_out);
       let unique_arr = Array.of_list (List.rev !counted) in
-      let fo = open_out outfile in
       List.iter
         (fun slist ->
 	  let rev_slist = List.rev slist in
@@ -1088,19 +1106,27 @@ let strip_geometries_alt geometries outfile =
 	  Printf.fprintf fo "verts\n";
 	  List.iter
 	    (fun i ->
-	      let (vx, vy, vz, _, _, _) = unique_arr.(i) in
+	      let (vx, vy, vz, _, _, _, _, _) = unique_arr.(i) in
 	      Printf.fprintf fo "%f %f %f\n" vx vy vz)
 	    rev_slist;
 	  Printf.fprintf fo "norms\n";
 	  List.iter
 	    (fun i ->
-	      let (_, _, _, nx, ny, nz) = unique_arr.(i) in
+	      let (_, _, _, nx, ny, nz, _, _) = unique_arr.(i) in
 	      Printf.fprintf fo "%f %f %f\n" nx ny nz)
 	    rev_slist;
+	  if !have_texcoords then begin
+	    Printf.fprintf fo "texcoords\n";
+	    List.iter
+	      (fun i ->
+		let (_, _, _, _, _, _, tu, tv) = unique_arr.(i) in
+		Printf.fprintf fo "%f %f\n" tu tv)
+	      rev_slist
+	  end;
 	  Printf.fprintf fo "end\n")
-	strips_out;
-      close_out fo)
-    glist
+	strips_out)
+    glist;
+  close_out fo
 
 
 let strip_blank_data doc_root =
@@ -1145,4 +1171,4 @@ let _ =
   do_later := [];
   (* print_vertices vertices; *)
   (* print_geometries !geometries; *)
-  strip_geometries_alt !geometries
+  strip_geometries_alt !geometries dest

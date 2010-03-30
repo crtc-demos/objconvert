@@ -139,7 +139,7 @@
 <!ATTLIST material id CDATA #REQUIRED >
 <!ATTLIST material name CDATA #REQUIRED >
 
-<!ELEMENT mesh ( source | vertices | triangles | polygons | polylist )+ >
+<!ELEMENT mesh ( source | vertices | triangles | polygons | polylist )* >
 
 <!ELEMENT minfilter ( #PCDATA ) >
 
