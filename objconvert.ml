@@ -1053,11 +1053,13 @@ let strip_geometries_alt geometries outfile =
   let fo = open_out outfile in
   List.iter
     (fun geom ->
-      Printf.printf "found geometry '%s'\n" geom;
+      Printf.printf "Found geometry '%s'\n" geom;
       let counted = ref []
       and triangle_indices = ref [] in
       List.iter
 	(fun poly ->
+	  Printf.printf "Material for poly is %s\n"
+            (match poly.material with None -> "(not set)" | Some x -> x);
 	  if poly.geometry = geom then begin
 	    let stride = poly_stride poly in
 	    List.iter
