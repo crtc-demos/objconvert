@@ -718,13 +718,24 @@ let poly_stride poly =
   increase_to uv_offset;
   succ !highest
 
+(* I am going straight to programmer hell for this.  *)
+
+let material_to_texture = function
+    "cube11_copy15_au" -> 1
+  | "cube11_copy13_au" -> 2
+  | "cube11_copy14_au" -> 3
+  | _ -> 0
+
 let print_geometries geometries =
   List.iter
     (fun poly ->
       let stride = poly_stride poly in
       Printf.printf "For geometry %s:\n" poly.geometry;
-      Printf.printf "Material is %s\n"
-        (match poly.material with None -> "(not set)" | Some x -> x);
+      let mat, tex = match poly.material with
+        Some x -> x, material_to_texture x
+      | None -> "(not set)", -1 in
+      Printf.printf "Using hardwired texture %d for material '%s'\n"
+        tex mat;
       List.iter
         (fun idx_array ->
 	  let points = (Array.length idx_array) / stride in
@@ -1055,12 +1066,19 @@ let strip_geometries_alt geometries outfile =
     (fun geom ->
       Printf.printf "Found geometry '%s'\n" geom;
       let counted = ref []
-      and triangle_indices = ref [] in
+      and triangle_indices = ref []
+      and use_texture = ref None in
       List.iter
 	(fun poly ->
-	  Printf.printf "Material for poly is %s\n"
-            (match poly.material with None -> "(not set)" | Some x -> x);
 	  if poly.geometry = geom then begin
+	    let mat, tex = match poly.material with
+	      Some x -> x, material_to_texture x
+	    | None -> "(not set)", -1 in
+	    Printf.printf "Using hardwired texture %d for material '%s'\n"
+	      tex mat;
+	    if tex != -1 then begin
+	      use_texture := Some tex
+	    end;
 	    let stride = poly_stride poly in
 	    List.iter
 	      (fun idx_array ->
@@ -1105,6 +1123,10 @@ let strip_geometries_alt geometries outfile =
         (fun slist ->
 	  let rev_slist = List.rev slist in
 	  Printf.fprintf fo "strip %d\n" (List.length slist);
+	  begin match !use_texture with
+	    Some tex -> Printf.fprintf fo "texidx %d\n" tex
+	  | None -> ()
+	  end;
 	  Printf.fprintf fo "verts\n";
 	  List.iter
 	    (fun i ->
