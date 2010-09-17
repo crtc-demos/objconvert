@@ -1040,6 +1040,14 @@ let add_polygons poly idx_array stride triangle_indices counted_pts =
 	  face.(2) :: face.(1) :: face.(0)
 	  :: face.(4) :: face.(2) :: face.(0)
 	  :: face.(3) :: face.(2) :: face.(4) :: triangle_indices
+      | 6 ->
+          (*  2 3
+	     1   4
+	      0 5  *)
+	  face.(2) :: face.(1) :: face.(0)
+	  :: face.(3) :: face.(2) :: face.(0)
+	  :: face.(5) :: face.(3) :: face.(0)
+	  :: face.(4) :: face.(3) :: face.(5) :: triangle_indices
       | 7 ->
 	  (*   3
 	     2   4
@@ -1169,14 +1177,35 @@ let strip_blank_data doc_root =
     doc_root
 
 let _ =
+  let outfile = ref ""
+  and infile = ref ""
+  and vert_arrays = ref false
+  and norm_arrays = ref false
+  and texcoord_arrays = ref false in
+  let argspec =
+    ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
+     "-v", Arg.Set vert_arrays, "Use indirect arrays for vertices";
+     "-n", Arg.Set norm_arrays, "Use indirect arrays for normals";
+     "-t", Arg.Set texcoord_arrays,
+             "Use indirect arrays for texture coordinates"]
+  and usage = "Usage: objconvert [options] infile -o outfile" in
+  Arg.parse argspec (fun name -> infile := name) usage;
+  if !infile = "" || !outfile = "" then begin
+    if !infile = "" then
+      prerr_endline "Input file missing."
+    else
+      prerr_endline "Output file missing.";
+    Arg.usage argspec usage;
+    exit 1
+  end;
   let config = Pxp_types.default_config
   and spec = Pxp_tree_parser.default_spec
   and source, dest =
     try
-      Pxp_types.from_file Sys.argv.(1), Sys.argv.(2)
-    with _ ->
-      Printf.fprintf stderr "Usage: %s <in> <out>\n" Sys.argv.(0);
-      exit 1 in
+      Pxp_types.from_file !infile, !outfile
+    with x ->
+      prerr_endline "Parse error:";
+      raise x in
   let dtd_source = Pxp_types.from_file "collada.auto.dtd" in
   let dtd = Pxp_dtd_parser.parse_dtd_entity config dtd_source in
   let doc = Pxp_tree_parser.parse_document_entity
