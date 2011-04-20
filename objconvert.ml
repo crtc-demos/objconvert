@@ -1065,6 +1065,38 @@ let add_polygons poly idx_array stride triangle_indices counted_pts =
       newpoints, !counted
   | _ -> triangle_indices, !counted
 
+let emit_stripsfile fo strips unique_arr use_texture =
+  List.iter
+   (fun slist ->
+     let rev_slist = List.rev slist in
+     Printf.fprintf fo "strip %d\n" (List.length slist);
+     begin match use_texture with
+       Some tex -> Printf.fprintf fo "texidx %d\n" tex
+     | None -> ()
+     end;
+     Printf.fprintf fo "verts\n";
+     List.iter
+       (fun i ->
+	 let (vx, vy, vz, _, _, _, _, _) = unique_arr.(i) in
+	 Printf.fprintf fo "%f %f %f\n" vx vy vz)
+       rev_slist;
+     Printf.fprintf fo "norms\n";
+     List.iter
+       (fun i ->
+	 let (_, _, _, nx, ny, nz, _, _) = unique_arr.(i) in
+	 Printf.fprintf fo "%f %f %f\n" nx ny nz)
+       rev_slist;
+     if !have_texcoords then begin
+       Printf.fprintf fo "texcoords\n";
+       List.iter
+	 (fun i ->
+	   let (_, _, _, _, _, _, tu, tv) = unique_arr.(i) in
+	   Printf.fprintf fo "%f %f\n" tu tv)
+	 rev_slist
+     end;
+     Printf.fprintf fo "end\n")
+   strips
+
 let strip_geometries_alt geometries outfile =
   have_texcoords := false;
   let glist = geometry_list geometries in
@@ -1127,39 +1159,33 @@ let strip_geometries_alt geometries outfile =
       let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
       Printf.printf "strip output length: %d\n" (List.length strips_out);
       let unique_arr = Array.of_list (List.rev !counted) in
-      List.iter
-        (fun slist ->
-	  let rev_slist = List.rev slist in
-	  Printf.fprintf fo "strip %d\n" (List.length slist);
-	  begin match !use_texture with
-	    Some tex -> Printf.fprintf fo "texidx %d\n" tex
-	  | None -> ()
-	  end;
-	  Printf.fprintf fo "verts\n";
-	  List.iter
-	    (fun i ->
-	      let (vx, vy, vz, _, _, _, _, _) = unique_arr.(i) in
-	      Printf.fprintf fo "%f %f %f\n" vx vy vz)
-	    rev_slist;
-	  Printf.fprintf fo "norms\n";
-	  List.iter
-	    (fun i ->
-	      let (_, _, _, nx, ny, nz, _, _) = unique_arr.(i) in
-	      Printf.fprintf fo "%f %f %f\n" nx ny nz)
-	    rev_slist;
-	  if !have_texcoords then begin
-	    Printf.fprintf fo "texcoords\n";
-	    List.iter
-	      (fun i ->
-		let (_, _, _, _, _, _, tu, tv) = unique_arr.(i) in
-		Printf.fprintf fo "%f %f\n" tu tv)
-	      rev_slist
-	  end;
-	  Printf.fprintf fo "end\n")
-	strips_out)
+      emit_stripsfile fo strips_out unique_arr !use_texture)
     glist;
   close_out fo
 
+let geometry_to_cfile geometries outfile =
+  have_texcoords := false;
+  let glist = geometry_list geometries in
+  let fo = open_out outfile in
+  List.iter
+    (fun geom ->
+      Printf.printf "Found geometry '%s'\n" geom;
+      List.iter
+        (fun poly ->
+	  if poly.geometry = geom then begin
+	    let stride = poly_stride poly in
+	    List.iter
+	      (fun idx_array ->
+	        match poly.poly_type with
+		  Polygons ->
+		    let 
+		| Triangles -> ...
+		| Polylist -> ...)
+	      poly.polys
+	  end)
+	geometries)
+    glist;
+  close_out fo
 
 let strip_blank_data doc_root =
   let is_blank foo =
@@ -1179,15 +1205,10 @@ let strip_blank_data doc_root =
 let _ =
   let outfile = ref ""
   and infile = ref ""
-  and vert_arrays = ref false
-  and norm_arrays = ref false
-  and texcoord_arrays = ref false in
+  and generate_c = ref false in
   let argspec =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
-     "-v", Arg.Set vert_arrays, "Use indirect arrays for vertices";
-     "-n", Arg.Set norm_arrays, "Use indirect arrays for normals";
-     "-t", Arg.Set texcoord_arrays,
-             "Use indirect arrays for texture coordinates"]
+     "-c", Arg.Set generate_c, "Generate C source"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
   Arg.parse argspec (fun name -> infile := name) usage;
   if !infile = "" || !outfile = "" then begin
