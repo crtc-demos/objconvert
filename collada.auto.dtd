@@ -47,12 +47,14 @@
 
 <!ELEMENT created ( #PCDATA ) >
 
-<!ELEMENT effect ( profile_COMMON ) >
+<!ELEMENT effect ( profile_COMMON | extra )* >
 <!ATTLIST effect id CDATA #REQUIRED >
 <!ATTLIST effect name CDATA #IMPLIED >
 
 <!ELEMENT extra ( technique ) >
-<!ATTLIST extra type CDATA #REQUIRED >
+<!ATTLIST extra type CDATA #IMPLIED >
+
+<!ELEMENT double_sided ( #PCDATA ) >
 
 <!ELEMENT falloff_angle ( #PCDATA ) >
 
@@ -143,16 +145,11 @@
 
 <!ELEMENT minfilter ( #PCDATA ) >
 
-<!ELEMENT profile_COMMON ( newparam | technique )+ >
+<!ELEMENT profile_COMMON ( newparam | technique | extra )+ >
 
 <!ELEMENT spline ( source | control_vertices )+ >
 
 <!ELEMENT modified ( #PCDATA ) >
-
-<!ELEMENT node ( translate | rotate | scale | instance_light | extra | instance_geometry | instance_camera | node )* >
-<!ATTLIST node id CDATA #REQUIRED >
-<!ATTLIST node name CDATA #REQUIRED >
-<!ATTLIST node layer CDATA #IMPLIED >
 
 <!ELEMENT optics ( technique_common ) >
 
@@ -165,9 +162,9 @@
 <!ATTLIST param name CDATA #REQUIRED >
 <!ATTLIST param type ( Name | boolean | float | float3 | float4 | int | URL ) #REQUIRED >
 
-<!ELEMENT perspective ( yfov, znear, zfar ) >
+<!ELEMENT perspective ( xfov | yfov | znear | zfar | aspect_ratio )* >
 
-<!ELEMENT phong ( ambient | emission | diffuse | specular | shininess | reflective | reflectivity | transparent | transparency )+ >
+<!ELEMENT phong ( ambient | emission | diffuse | specular | shininess | reflective | reflectivity | transparent | transparency | index_of_refraction )+ >
 
 <!ELEMENT lambert ( ambient | diffuse )+ >
 
@@ -188,6 +185,8 @@
 <!ELEMENT transparent ( color ) >
 
 <!ELEMENT transparency ( float ) >
+
+<!ELEMENT index_of_refraction ( float ) >
 
 <!ELEMENT point ( color, constant_attenuation, linear_attenuation, quadratic_attenuation ) >
 
@@ -237,12 +236,16 @@
 <!ELEMENT surface ( init_from | format )+ >
 <!ATTLIST surface type NMTOKEN #REQUIRED >
 
-<!ELEMENT technique ( E3DPanel | phong | lambert | param | program | rendererset | scene_settings )* >
-<!ATTLIST technique profile NMTOKEN #FIXED "EQUINOX-3D" >
+<!ELEMENT technique ( E3DPanel | phong | lambert | param | program | rendererset | scene_settings | adapt_thresh | area_shape | area_size | area_sizex | area_sizey | area_sizez | atm_distance_factor | atm_extinction_factor | atm_turbidity | att1 | att2 | backscattered_light | bias | blue | buffers | bufflag | bufsize | buftype | clipend | clipsta | compressthresh | dist | energy | falloff_type | filtertype | flag | gamma | green | halo_intensity | horizon_brightness | mode | ray_samp | ray_samp_method | ray_samp_type | ray_sampy | ray_sampz | red | samp | shadhalostep | shadow_b | shadow_g | shadow_r | shadspotsize | sky_colorspace | sky_exposure | skyblendfac | skyblendtype | soft | spotblend | spotsize | spread | sun_brightness | sun_effect_type | sun_intensity | sun_size | type | double_sided )* >
+<!ATTLIST technique profile CDATA #IMPLIED >
 <!ATTLIST technique id CDATA #IMPLIED >
 <!ATTLIST technique sid CDATA #IMPLIED >
 
 <!ELEMENT technique_common ( accessor | orthographic | perspective | point | instance_material | spot )* >
+
+<!ELEMENT xfov ( #PCDATA ) >
+
+<!ELEMENT aspect_ratio ( #PCDATA ) >
 
 <!ELEMENT texture EMPTY >
 <!ATTLIST texture texcoord CDATA #REQUIRED >
@@ -271,9 +274,15 @@
 <!ELEMENT viewmode ( lookat, camera ) >
 <!ATTLIST viewmode type ( ANIMATION | FRONT | PERSPECTIVE | RIGHT | SCHEMATICS | TEXTURE | TOP ) #REQUIRED >
 
-<!ELEMENT visual_scene ( node+ ) >
+<!ELEMENT visual_scene ( node )+ >
 <!ATTLIST visual_scene id CDATA #REQUIRED >
-<!ATTLIST visual_scene name CDATA #IMPLIED >
+<!ATTLIST visual_scene name CDATA #REQUIRED >
+
+<!ELEMENT node ( translate | rotate | scale | instance_light | extra | instance_geometry | instance_camera )* >
+<!ATTLIST node id CDATA #REQUIRED >
+<!ATTLIST node name CDATA #IMPLIED >
+<!ATTLIST node type CDATA #IMPLIED >
+<!ATTLIST node layer CDATA #IMPLIED >
 
 <!ELEMENT xmag ( #PCDATA ) >
 
@@ -285,3 +294,59 @@
 
 <!ELEMENT znear ( #PCDATA ) >
 
+<!ELEMENT adapt_thresh ( #PCDATA ) >
+<!ELEMENT area_shape ( #PCDATA ) >
+<!ELEMENT area_size ( #PCDATA ) >
+<!ELEMENT area_sizex ( #PCDATA ) >
+<!ELEMENT area_sizey ( #PCDATA ) >
+<!ELEMENT area_sizez ( #PCDATA ) >
+<!ELEMENT atm_distance_factor ( #PCDATA ) >
+<!ELEMENT atm_extinction_factor ( #PCDATA ) >
+<!ELEMENT atm_turbidity ( #PCDATA ) >
+<!ELEMENT att1 ( #PCDATA ) >
+<!ELEMENT att2 ( #PCDATA ) >
+<!ELEMENT backscattered_light ( #PCDATA ) >
+<!ELEMENT bias ( #PCDATA ) >
+<!ELEMENT blue ( #PCDATA ) >
+<!ELEMENT buffers ( #PCDATA ) >
+<!ELEMENT bufflag ( #PCDATA ) >
+<!ELEMENT bufsize ( #PCDATA ) >
+<!ELEMENT buftype ( #PCDATA ) >
+<!ELEMENT clipend ( #PCDATA ) >
+<!ELEMENT clipsta ( #PCDATA ) >
+<!ELEMENT compressthresh ( #PCDATA ) >
+<!ELEMENT dist ( #PCDATA ) >
+<!ELEMENT energy ( #PCDATA ) >
+<!ELEMENT falloff_type ( #PCDATA ) >
+<!ELEMENT filtertype ( #PCDATA ) >
+<!ELEMENT flag ( #PCDATA ) >
+<!ELEMENT gamma ( #PCDATA ) >
+<!ELEMENT green ( #PCDATA ) >
+<!ELEMENT halo_intensity ( #PCDATA ) >
+<!ELEMENT horizon_brightness ( #PCDATA ) >
+<!ELEMENT mode ( #PCDATA ) >
+<!ELEMENT ray_samp ( #PCDATA ) >
+<!ELEMENT ray_samp_method ( #PCDATA ) >
+<!ELEMENT ray_samp_type ( #PCDATA ) >
+<!ELEMENT ray_sampy ( #PCDATA ) >
+<!ELEMENT ray_sampz ( #PCDATA ) >
+<!ELEMENT red ( #PCDATA ) >
+<!ELEMENT samp ( #PCDATA ) >
+<!ELEMENT shadhalostep ( #PCDATA ) >
+<!ELEMENT shadow_b ( #PCDATA ) >
+<!ELEMENT shadow_g ( #PCDATA ) >
+<!ELEMENT shadow_r ( #PCDATA ) >
+<!ELEMENT shadspotsize ( #PCDATA ) >
+<!ELEMENT sky_colorspace ( #PCDATA ) >
+<!ELEMENT sky_exposure ( #PCDATA ) >
+<!ELEMENT skyblendfac ( #PCDATA ) >
+<!ELEMENT skyblendtype ( #PCDATA ) >
+<!ELEMENT soft ( #PCDATA ) >
+<!ELEMENT spotblend ( #PCDATA ) >
+<!ELEMENT spotsize ( #PCDATA ) >
+<!ELEMENT spread ( #PCDATA ) >
+<!ELEMENT sun_brightness ( #PCDATA ) >
+<!ELEMENT sun_effect_type ( #PCDATA ) >
+<!ELEMENT sun_intensity ( #PCDATA ) >
+<!ELEMENT sun_size ( #PCDATA ) >
+<!ELEMENT type ( #PCDATA ) >

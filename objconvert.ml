@@ -71,7 +71,8 @@ and phong =
     mutable reflective : colour option;
     mutable reflectivity : float option;
     mutable transparent : colour option;
-    mutable transparency : float option
+    mutable transparency : float option;
+    mutable index_of_refraction : float option
   }
 
 and lambert =
@@ -344,6 +345,7 @@ let parse_phong id phong_parts =
       reflectivity = None;
       transparent = None;
       transparency = None;
+      index_of_refraction = None
     } in
   List.iter
     (fun node ->
@@ -366,6 +368,8 @@ let parse_phong id phong_parts =
 	  phonginf.transparent <- Some (parse_colour (node_child node))
       | Pxp_document.T_element "transparency" ->
 	  phonginf.transparency <- Some (parse_float (node_child node))
+      | Pxp_document.T_element "index_of_refraction" ->
+          phonginf.index_of_refraction <- Some (parse_float (node_child node))
       | _ -> bad_node node "below phong")
     phong_parts
 
@@ -627,6 +631,9 @@ let parse_profile_common id profile_common_parts =
       | Pxp_document.T_element "newparam" ->
           let sid = prof_com_part#optional_string_attribute "sid" in
 	  parse_newparam sid prof_com_part#sub_nodes
+      | Pxp_document.T_element "extra" ->
+         (* Ignore *)
+	 ()
       | _ -> bad_node prof_com_part "below profile_common")
     profile_common_parts
 
@@ -636,6 +643,9 @@ let parse_effect id effect_nodes =
       match effect_part#node_type with
         Pxp_document.T_element "profile_COMMON" ->
 	  parse_profile_common id effect_part#sub_nodes
+      | Pxp_document.T_element "extra" ->
+          (* Ignore *)
+	  ()
       | _ -> bad_node effect_part "below effect")
     effect_nodes
 
@@ -1163,29 +1173,186 @@ let strip_geometries_alt geometries outfile =
     glist;
   close_out fo
 
-let geometry_to_cfile geometries outfile =
+(* Add POINT to COUNTED if none of the existing points satisfy CLOSE_P.
+   Otherwise return the index of an existing point, and the original list.  *)
+
+let uniquify_point close_p point counted =
+  let rec scan idx = function
+    (point') :: more ->
+      if close_p point point' then
+        idx
+      else
+        scan (idx - 1) more
+   | [] -> raise Not_found in
+   try
+     let idx = scan (List.length counted - 1) counted in
+     idx, counted
+   with Not_found ->
+     let idx = List.length counted in
+     idx, point :: counted
+
+let epsilon = 0.000001
+
+let uniquify_texcoord point counted =
+  uniquify_point
+    (fun (s, t) (s', t') ->
+      abs_float (s' -. s) <= epsilon && abs_float (t' -. t) <= epsilon)
+    point
+    counted
+
+let uniquify_pos_norm point counted =
+  uniquify_point
+    (fun (x, y, z) (x', y', z') ->
+      abs_float (x -. x') <= epsilon
+      && abs_float (y -. y') <= epsilon
+      && abs_float (z -. z') <= epsilon)
+    point
+    counted
+
+(* FUNC:
+      int list list  (list of strip indices)
+      -> (float * float * float * float * float * float * float * float) array
+      -> 'a option
+   GEOMETRIES:
+      Objconvert.polygon list
+   ACC:
+     'b
+*)
+
+let fold_geometry_strips func geometries acc =
   have_texcoords := false;
   let glist = geometry_list geometries in
-  let fo = open_out outfile in
-  List.iter
-    (fun geom ->
-      Printf.printf "Found geometry '%s'\n" geom;
+  List.fold_right
+    (fun geom acc ->
+      let counted = ref []
+      and triangle_indices = ref []
+      and use_texture = ref None in
       List.iter
-        (fun poly ->
+	(fun poly ->
 	  if poly.geometry = geom then begin
 	    let stride = poly_stride poly in
 	    List.iter
 	      (fun idx_array ->
 	        match poly.poly_type with
 		  Polygons ->
-		    let 
-		| Triangles -> ...
-		| Polylist -> ...)
-	      poly.polys
+		    let new_tri_indices, new_counted
+		      = add_polygons poly idx_array stride !triangle_indices
+				     !counted in
+		    triangle_indices := new_tri_indices;
+		    counted := new_counted
+		| Triangles ->
+		    let num_tris = (Array.length idx_array) / (stride * 3) in
+		    for tri = 0 to num_tris - 1 do
+		      let slice = Array.sub idx_array (tri * stride * 3)
+					    (stride * 3) in
+		      let new_tri_indices, new_counted
+		        = add_polygons poly slice stride !triangle_indices
+				       !counted in
+		      triangle_indices := new_tri_indices;
+		      counted := new_counted
+		    done
+		| Polylist ->
+		    ignore (List.fold_left
+		      (fun from poly_len ->
+		        let slice = Array.sub idx_array from
+					      (poly_len * stride) in
+			let new_tri_indices, new_counted
+			  = add_polygons poly slice stride !triangle_indices
+					      !counted in
+			triangle_indices := new_tri_indices;
+			counted := new_counted;
+			from + poly_len * stride)
+		      0
+		      poly.vcount))
+	      poly.polys;
 	  end)
-	geometries)
-    glist;
-  close_out fo
+	geometries;
+      let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
+      Printf.printf "strip output length: %d\n" (List.length strips_out);
+      let unique_arr = Array.of_list (List.rev !counted) in
+      func strips_out unique_arr !use_texture acc)
+    glist
+    acc
+
+let print_vec3_list fo name vl =
+  Printf.fprintf fo "f32 %s[] ATTRIBUTE_ALIGN(32) = {\n" name;
+  List.iter
+    (fun (x, y, z) ->
+      Printf.fprintf fo "  %f, %f, %f,\n" x y z)
+    vl;
+  Printf.fprintf fo "};\n"
+
+let print_vec2_list fo name vl =
+  Printf.fprintf fo "f32 %s[] ATTRIBUTE_ALIGN(32) = {\n" name;
+  List.iter
+    (fun (x, y) ->
+      Printf.fprintf fo "  %f, %f,\n" x y)
+    vl;
+  Printf.fprintf fo "};\n"
+
+let print_strips fo name strips =
+  ignore (List.fold_right
+    (fun strip num ->
+      Printf.fprintf fo "static u16 %s_%d[] = {\n" name num;
+      List.iter
+	(fun (pi, ni, ti) -> Printf.fprintf fo "  %d, %d, %d,\n" pi ni ti)
+	(List.rev strip);
+      Printf.fprintf fo "};\n\n";
+      succ num)
+    strips
+    0)
+
+let print_strip_lengths fo name strips =
+  Printf.fprintf fo "unsigned int %s[] = {\n" name;
+  ignore (List.fold_right
+    (fun strip num ->
+      Printf.fprintf fo "  %d,\n" (List.length strip);
+      succ num)
+    strips
+    0);
+  Printf.fprintf fo "};\n"
+
+let print_strip_ptrs fo name s_name strips =
+  Printf.fprintf fo "u16 *%s[] = {\n" name;
+  ignore (List.fold_right
+    (fun strip num ->
+      Printf.fprintf fo "  %s_%d,\n" s_name num;
+      succ num)
+    strips
+    0);
+  Printf.fprintf fo "};\n"
+
+let geometry_to_gx fo name geometries =
+  let reindexed_strips, pos, norm, tx =
+    fold_geometry_strips
+      (fun strip_list coord_arr use_texture acc ->
+        List.fold_right
+	  (fun strip (strips, pos, norm, tx) ->
+	    let one_strip, pos', norm', tx' =
+	      List.fold_right
+		(fun idx (out_strip, pos, norm, tx) ->
+	          let (px, py, pz, nx, ny, nz, ts, tt) = coord_arr.(idx) in
+		  let pidx, pos' = uniquify_pos_norm (px, py, pz) pos
+		  and nidx, norm' = uniquify_pos_norm (nx, ny, nz) norm
+		  and tidx, tx' = uniquify_texcoord (ts, tt) tx in
+		  ((pidx, nidx, tidx) :: out_strip), pos', norm', tx')
+		strip
+		([], pos, norm, tx) in
+	      (one_strip :: strips), pos', norm', tx')
+	    strip_list
+	    acc)
+      geometries
+      ([], [], [], []) in
+  print_vec3_list fo (name ^ "_pos") (List.rev pos);
+  Printf.fprintf fo "\n";
+  print_vec3_list fo (name ^ "_norm") (List.rev norm);
+  Printf.fprintf fo "\n";
+  print_vec2_list fo (name ^ "_texidx") (List.rev tx);
+  Printf.fprintf fo "\n";
+  print_strips fo (name ^ "_strip") reindexed_strips;
+  print_strip_lengths fo (name ^ "_lengths") reindexed_strips;
+  Printf.fprintf fo "\n";
+  print_strip_ptrs fo (name ^ "_strips") (name ^ "_strip") reindexed_strips
 
 let strip_blank_data doc_root =
   let is_blank foo =
@@ -1245,4 +1412,10 @@ let _ =
   do_later := [];
   (* print_vertices vertices; *)
   (* print_geometries !geometries; *)
-  strip_geometries_alt !geometries dest
+  if !generate_c then begin
+    let fo = open_out !outfile in
+    geometry_to_gx fo (Filename.chop_extension (Filename.basename !outfile))
+		      !geometries;
+    close_out fo
+  end else
+    strip_geometries_alt !geometries dest
