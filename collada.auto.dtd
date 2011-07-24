@@ -113,17 +113,17 @@
 <!ELEMENT instance_visual_scene EMPTY >
 <!ATTLIST instance_visual_scene url CDATA #REQUIRED >
 
-<!ELEMENT library_cameras ( camera )+ >
+<!ELEMENT library_cameras ( camera )* >
 
-<!ELEMENT library_effects ( effect )+ >
+<!ELEMENT library_effects ( effect )* >
 
-<!ELEMENT library_images ( image )+ >
+<!ELEMENT library_images ( image )* >
 
-<!ELEMENT library_geometries ( geometry )+ >
+<!ELEMENT library_geometries ( geometry )* >
 
-<!ELEMENT library_lights ( light )+ >
+<!ELEMENT library_lights ( light )* >
 
-<!ELEMENT library_materials ( material )+ >
+<!ELEMENT library_materials ( material )* >
 
 <!ELEMENT library_visual_scenes ( visual_scene ) >
 
@@ -230,6 +230,7 @@
 
 <!ELEMENT source ( #PCDATA | Name_array | int_array | float_array | technique_common | technique )* >
 <!ATTLIST source id CDATA #IMPLIED >
+<!ATTLIST source name CDATA #IMPLIED >
 
 <!ELEMENT spot ( color | constant_attenuation | linear_attenuation | falloff_angle )+ >
 
@@ -274,11 +275,12 @@
 <!ELEMENT viewmode ( lookat, camera ) >
 <!ATTLIST viewmode type ( ANIMATION | FRONT | PERSPECTIVE | RIGHT | SCHEMATICS | TEXTURE | TOP ) #REQUIRED >
 
-<!ELEMENT visual_scene ( node )+ >
+<!ELEMENT visual_scene ( node )* >
 <!ATTLIST visual_scene id CDATA #REQUIRED >
-<!ATTLIST visual_scene name CDATA #REQUIRED >
+<!ATTLIST visual_scene name CDATA #IMPLIED >
 
-<!ELEMENT node ( translate | rotate | scale | instance_light | extra | instance_geometry | instance_camera )* >
+<!ELEMENT node ( translate | rotate | scale | instance_light | extra | instance_geometry
+		 | instance_camera | lookat )* >
 <!ATTLIST node id CDATA #REQUIRED >
 <!ATTLIST node name CDATA #IMPLIED >
 <!ATTLIST node type CDATA #IMPLIED >

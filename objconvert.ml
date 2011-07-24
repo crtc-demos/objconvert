@@ -1372,9 +1372,11 @@ let strip_blank_data doc_root =
 let _ =
   let outfile = ref ""
   and infile = ref ""
+  and geom_name = ref ""
   and generate_c = ref false in
   let argspec =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
+     "-n", Arg.Set_string geom_name, "Set geometry name";
      "-c", Arg.Set generate_c, "Generate C source"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
   Arg.parse argspec (fun name -> infile := name) usage;
@@ -1386,6 +1388,8 @@ let _ =
     Arg.usage argspec usage;
     exit 1
   end;
+  if !geom_name = "" then
+    geom_name := Filename.chop_extension (Filename.basename !outfile);
   let config = Pxp_types.default_config
   and spec = Pxp_tree_parser.default_spec
   and source, dest =
@@ -1414,8 +1418,7 @@ let _ =
   (* print_geometries !geometries; *)
   if !generate_c then begin
     let fo = open_out !outfile in
-    geometry_to_gx fo (Filename.chop_extension (Filename.basename !outfile))
-		      !geometries;
+    geometry_to_gx fo !geom_name !geometries;
     close_out fo
   end else
     strip_geometries_alt !geometries dest
