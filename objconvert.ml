@@ -1193,21 +1193,19 @@ let uniquify_point close_p point counted =
 
 let epsilon = 0.000001
 
+let texc_equalish (s, t) (s', t') =
+  abs_float (s' -. s) <= epsilon && abs_float (t' -. t) <= epsilon
+
 let uniquify_texcoord point counted =
-  uniquify_point
-    (fun (s, t) (s', t') ->
-      abs_float (s' -. s) <= epsilon && abs_float (t' -. t) <= epsilon)
-    point
-    counted
+  uniquify_point texc_equalish point counted
+
+let points_equalish (x, y, z) (x', y', z') =
+  abs_float (x -. x') <= epsilon
+  && abs_float (y -. y') <= epsilon
+  && abs_float (z -. z') <= epsilon
 
 let uniquify_pos_norm point counted =
-  uniquify_point
-    (fun (x, y, z) (x', y', z') ->
-      abs_float (x -. x') <= epsilon
-      && abs_float (y -. y') <= epsilon
-      && abs_float (z -. z') <= epsilon)
-    point
-    counted
+  uniquify_point points_equalish point counted
 
 (* FUNC:
       int list list  (list of strip indices)
@@ -1290,12 +1288,16 @@ let print_vec2_list fo name vl =
     vl;
   Printf.fprintf fo "};\n"
 
-let print_strips fo name strips =
+let print_strips fo name strips ~nbt =
   ignore (List.fold_right
     (fun strip num ->
       Printf.fprintf fo "static u16 %s_%d[] = {\n" name num;
       List.iter
-	(fun (pi, ni, ti) -> Printf.fprintf fo "  %d, %d, %d,\n" pi ni ti)
+	(fun (pi, ni, bni, tni, ti) ->
+	  if nbt then
+	    Printf.fprintf fo "  %d, %d, %d, %d, %d,\n" pi ni bni tni ti
+	  else
+	    Printf.fprintf fo "  %d, %d, %d,\n" pi ni ti)
 	(List.rev strip);
       Printf.fprintf fo "};\n\n";
       succ num)
@@ -1322,25 +1324,203 @@ let print_strip_ptrs fo name s_name strips =
     0);
   Printf.fprintf fo "};\n"
 
-let geometry_to_gx fo name geometries =
+let get_pos coord_arr idx =
+  let (px, py, pz, _, _, _, _, _) = coord_arr.(idx) in px, py, pz
+
+let get_norm coord_arr idx =
+  let (_, _, _, nx, ny, nz, _, _) = coord_arr.(idx) in nx, ny, nz
+
+let get_texcoord coord_arr idx =
+  let (_, _, _, _, _, _, ts, tt) = coord_arr.(idx) in ts, tt
+
+let vec_scale s (x, y, z) =
+  s *. x, s *. y, s *. z
+
+let vec_add (ax, ay, az) (bx, by, bz) =
+  ax +. bx, ay +. by, az +. bz
+
+let vec_sub (ax, ay, az) (bx, by, bz) =
+  ax -. bx, ay -. by, az -. bz
+
+let vec_cross (ax, ay, az) (bx, by, bz) =
+  ay *. bz -. az *. by,
+  az *. bx -. ax *. bz,
+  ax *. by -. ay *. bx
+
+let vec_dot (ax, ay, az) (bx, by, bz) =
+  ax *. bx +. ay *. by +. az *. bz
+
+let vec_norm (x, y, z) =
+  let len = sqrt (x *. x +. y *. y +. z *. z) in
+  if len = 0.0 then
+    0.0, 0.0, 0.0
+  else
+    let rlen = 1.0 /. len in
+    x *. rlen, y *. rlen, z *. rlen
+
+let inv_or_zero n =
+  if n = 0.0 then 0.0 else 1.0 /. n
+
+let degenerate_tri coord_arr ai bi ci =
+  let pa = get_pos coord_arr ai
+  and pb = get_pos coord_arr bi
+  and pc = get_pos coord_arr ci
+  and ta = get_texcoord coord_arr ai
+  and tb = get_texcoord coord_arr bi
+  and tc = get_texcoord coord_arr ci in
+  let _, points = uniquify_pos_norm pa [] in
+  let _, points = uniquify_pos_norm pb points in
+  let _, points = uniquify_pos_norm pc points in
+  let _, texcs = uniquify_texcoord ta [] in
+  let _, texcs = uniquify_texcoord tb texcs in
+  let _, texcs = uniquify_texcoord tc texcs in
+  List.length points != 3 || List.length texcs != 3
+
+let vec_nonzero (vx, vy, vz) =
+  vx <> 0.0 || vy <> 0.0 || vz <> 0.0
+
+(* Attempt to fill in gaps for binormals/tangents which couldn't be calculated
+   due to degenerate triangles in strips.  *)
+
+let fill_degenerate_gaps u_arr v_arr coord_arr strip_arr degenerates =
+  List.iter
+    (fun i ->
+      Printf.printf "Attempting to fill %d\n" i;
+      let pos = get_pos coord_arr strip_arr.(i)
+      and texc = get_texcoord coord_arr strip_arr.(i) in
+      for j = 0 to Array.length strip_arr - 1 do
+        let opos = get_pos coord_arr strip_arr.(j)
+	and otexc = get_texcoord coord_arr strip_arr.(j) in
+	if points_equalish pos opos && texc_equalish texc otexc then begin
+	  if vec_nonzero u_arr.(j) then begin
+	    Printf.printf "set u at %d from %d\n" i j;
+	    u_arr.(i) <- u_arr.(j)
+	  end;
+	  if vec_nonzero v_arr.(j) then begin
+	    Printf.printf "set v at %d from %d\n" i j;
+	    v_arr.(i) <- v_arr.(j)
+	  end
+	end
+      done)
+    degenerates
+
+exception Degenerate
+
+let get_uv_from_tri coord_arr ai bi ci =
+  let a = get_pos coord_arr ai
+  and b = get_pos coord_arr bi
+  and c = get_pos coord_arr ci in
+  let e = vec_sub b a
+  and f = vec_sub c a in
+  let s0, t0 = get_texcoord coord_arr ai
+  and s1, t1 = get_texcoord coord_arr bi
+  and s2, t2 = get_texcoord coord_arr ci in
+  if degenerate_tri coord_arr ai bi ci then
+    raise Degenerate;
+  let u_num = vec_sub (vec_scale (t2 -. t0) e) (vec_scale (t1 -. t0) f)
+  and v_num = vec_sub (vec_scale (s1 -. s0) f) (vec_scale (s2 -. s0) e) in
+  let denom = (s1 -. s0) *. (t2 -. t0) -. (s2 -. s0) *. (t1 -. t0) in
+  let u = vec_scale (inv_or_zero denom) u_num
+  and v = vec_scale (inv_or_zero denom) v_num in
+  let orig_norm = get_norm coord_arr ai in
+  (* Using the original normal lets us do better for curved surfaces.  *)
+  if true then
+    vec_norm (vec_cross orig_norm v), vec_norm (vec_cross orig_norm u)
+  else
+    vec_norm u, vec_norm v
+
+let calculate_nbt coord_arr strip =
+  let strip_arr = Array.of_list (List.rev strip) in
+  let strip_len = Array.length strip_arr in
+  let u_arr = Array.make strip_len (0.0, 0.0, 0.0)
+  and v_arr = Array.make strip_len (0.0, 0.0, 0.0) in
+  let degenerates = ref [] in
+  for i = 0 to strip_len - 1 do
+    (* Get a "clockwise" triangle, first - i - second.  *)
+    let first, second =
+      if i == 0 then
+        1, 2
+      else if i == strip_len - 1 then
+        strip_len - 3, strip_len - 2
+      else
+        i - 1, i + 1 in
+    let first', second' =
+      if i land 1 == 0 then
+        second, first
+      else
+        first, second in
+    (* ...so this is a triangle BAC.  *)
+    let ai = strip_arr.(i)
+    and bi = strip_arr.(first')
+    and ci = strip_arr.(second') in
+    begin try
+      let u, v = get_uv_from_tri coord_arr ai bi ci in
+      u_arr.(i) <- u;
+      v_arr.(i) <- v
+    with Degenerate ->
+      if i > 0 && i < strip_len - 2 then begin
+        Printf.printf "Trying mid-strip alternative\n";
+	let first, second =
+	  if i land 1 == 0 then
+	    i + 2, i + 1
+	  else
+	    i + 1, i + 2 in
+	let bi = strip_arr.(first)
+	and ci = strip_arr.(second) in
+	try
+	  let u, v = get_uv_from_tri coord_arr ai bi ci in
+	  print_endline "Mid-strip alternative successful!";
+	  u_arr.(i) <- u;
+	  v_arr.(i) <- v
+	with Degenerate ->
+          Printf.printf "%d is degenerate! (Even after trying alternative)\n" i;
+	  degenerates := i :: !degenerates
+      end else begin
+	Printf.printf "%d is degenerate!\n" i;
+	degenerates := i :: !degenerates
+      end
+    end
+  done;
+  fill_degenerate_gaps u_arr v_arr coord_arr strip_arr !degenerates;
+  u_arr, v_arr
+
+let wrap idx =
+  if idx < 0 then idx + 65536 else idx
+
+let geometry_to_gx fo name geometries ~nbt =
   let reindexed_strips, pos, norm, tx =
     fold_geometry_strips
       (fun strip_list coord_arr use_texture acc ->
         List.fold_right
 	  (fun strip (strips, pos, norm, tx) ->
-	    let one_strip, pos', norm', tx' =
+	    let u_arr, v_arr =
+	      if nbt then
+	        calculate_nbt coord_arr strip
+	      else
+	        Array.make 0 (0.0, 0.0, 0.0), Array.make 0 (0.0, 0.0, 0.0) in
+	    let one_strip, pos', norm', tx', _ =
 	      List.fold_right
-		(fun idx (out_strip, pos, norm, tx) ->
+		(fun idx (out_strip, pos, norm, tx, offset) ->
 	          let (px, py, pz, nx, ny, nz, ts, tt) = coord_arr.(idx) in
 		  let pidx, pos' = uniquify_pos_norm (px, py, pz) pos
 		  and nidx, norm' = uniquify_pos_norm (nx, ny, nz) norm
 		  and tidx, tx' = uniquify_texcoord (ts, tt) tx in
-		  ((pidx, nidx, tidx) :: out_strip), pos', norm', tx')
+		  let bindx, tandx, norm' =
+		    if nbt then
+		      let bindx, norm'
+		        = uniquify_pos_norm u_arr.(offset) norm' in
+		      let tandx, norm'
+		        = uniquify_pos_norm v_arr.(offset) norm' in
+		      wrap (bindx - 1), wrap (tandx - 2), norm'
+		    else
+		      -1, -1, norm' in
+		  ((pidx, nidx, bindx, tandx, tidx) :: out_strip),
+		  pos', norm', tx', succ offset)
 		strip
-		([], pos, norm, tx) in
+		([], pos, norm, tx, 0) in
 	      (one_strip :: strips), pos', norm', tx')
-	    strip_list
-	    acc)
+	  strip_list
+	  acc)
       geometries
       ([], [], [], []) in
   print_vec3_list fo (name ^ "_pos") (List.rev pos);
@@ -1349,7 +1529,7 @@ let geometry_to_gx fo name geometries =
   Printf.fprintf fo "\n";
   print_vec2_list fo (name ^ "_texidx") (List.rev tx);
   Printf.fprintf fo "\n";
-  print_strips fo (name ^ "_strip") reindexed_strips;
+  print_strips fo (name ^ "_strip") reindexed_strips ~nbt;
   print_strip_lengths fo (name ^ "_lengths") reindexed_strips;
   Printf.fprintf fo "\n";
   print_strip_ptrs fo (name ^ "_strips") (name ^ "_strip") reindexed_strips
@@ -1373,11 +1553,13 @@ let _ =
   let outfile = ref ""
   and infile = ref ""
   and geom_name = ref ""
-  and generate_c = ref false in
+  and generate_c = ref false
+  and gen_binormal_tangent = ref false in
   let argspec =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
      "-n", Arg.Set_string geom_name, "Set geometry name";
-     "-c", Arg.Set generate_c, "Generate C source"]
+     "-c", Arg.Set generate_c, "Generate C source";
+     "-t", Arg.Set gen_binormal_tangent, "Generate binormals & tangents"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
   Arg.parse argspec (fun name -> infile := name) usage;
   if !infile = "" || !outfile = "" then begin
@@ -1418,7 +1600,7 @@ let _ =
   (* print_geometries !geometries; *)
   if !generate_c then begin
     let fo = open_out !outfile in
-    geometry_to_gx fo !geom_name !geometries;
+    geometry_to_gx fo !geom_name !geometries ~nbt:!gen_binormal_tangent;
     close_out fo
   end else
     strip_geometries_alt !geometries dest
