@@ -10,21 +10,28 @@
 	TARGET = dllstrips.so
 
 	LIB = strips.cma
+	LIBNAT = strips.cmxa
 
-all:	$(LIB)
+all:	$(LIB) $(LIBNAT)
 
 $(TARGET): $(OBJS)
 	g++ $(LDFLAGS) -shared -fPIC -DPIC $(OBJS) -o $@
 
 $(LIB):	$(TARGET) strips.cmo
-	ocamlc -a -o $(LIB) strips.cmo -dllib -lstrips
+	ocamlc -g -a -o $@ strips.cmo -dllib -lstrips
+
+$(LIBNAT):	$(TARGET) strips.o
+	ocamlmklib -o $(basename $(LIBNAT)) strips.cmx -L. -lstrips -lstdc++
 
 %.o:	%.cpp
 	g++ $(CFLAGS) -shared -fPIC -DPIC -c $< -o $@
 
 %.cmo:	%.ml
-	ocamlc -c $< -o $@
+	ocamlc -g -c $< -o $@
+
+%.o:	%.ml
+	ocamlopt -c $< -o $@
 
 .PHONY: clean
 clean:
-	rm -f *.o $(TARGET)
+	rm -f *.o $(TARGET) $(LIB) $(LIBNAT)

@@ -238,6 +238,9 @@ let parse_params param_nodes =
     param_nodes;
   List.rev !param_list
 
+(* Whee, an ugly global.  *)
+let flip_yz = ref false
+
 let make_accessor source_id array_source count stride param_list =
   let rec scan_params acc plist pnum =
     match plist with
@@ -246,7 +249,10 @@ let make_accessor source_id array_source count stride param_list =
         if ptype <> Float_param then
 	  failwith "Non-float accessor not implemented";
         let tag = begin match pname with
-	  "X" -> `x | "Y" -> `y | "Z" -> `z | "S" -> `s | "T" -> `t
+	  "X" -> `x
+	| "Y" -> if !flip_yz then `z else `y
+	| "Z" -> if !flip_yz then `y else `z
+	| "S" -> `s | "T" -> `t
 	| "U" -> `u | "V" -> `v | other -> `misc other
 	end in
 	scan_params ((tag, pnum) :: acc) ps (succ pnum) in
@@ -287,15 +293,21 @@ let parse_float_array count datastring =
   done;
   myarray
 
+(* This is a bit obfuscated because we want to avoid building a whole pile of
+   exception handlers on the stack.  *)
 let parse_int_list datastring =
   let lexer = Genlex.make_lexer [] (Stream.of_string datastring) in
   let rec accumulate entries =
-    try
-      let item = Stream.next lexer in
-      match item with
-	Genlex.Int n -> accumulate (n :: entries)
-      | _ -> raise (Bad_token item)
-    with Stream.Failure -> entries in
+    let item =
+      try
+	let item = Stream.next lexer in
+	match item with
+	  Genlex.Int n -> Some n
+	| _ -> raise (Bad_token item)
+      with Stream.Failure -> None in
+    match item with
+      Some n -> accumulate (n :: entries)
+    | None -> entries in
   List.rev (accumulate [])
 
 let parse_colour node =
@@ -993,9 +1005,18 @@ let strip_geometries geometries =
     glist
 
 let add_if_different vx vy vz nx ny nz tu tv counted =
-  let epsilon = 0.000000001 in
+  try
+    Hashtbl.find counted (vx, vy, vz, nx, ny, nz, tu, tv)
+  with Not_found ->
+    let size = Hashtbl.length counted in
+    Hashtbl.add counted (vx, vy, vz, nx, ny, nz, tu, tv) size;
+    size
+
+(*
+let add_if_different vx vy vz nx ny nz tu tv counted =
   let rec scan idx = function
     (vx', vy', vz', nx', ny', nz', tu', tv') :: more ->
+      Hashtbl.find counted
       if abs_float (vx' -. vx) <= epsilon
          && abs_float (vy' -. vy) <= epsilon
 	 && abs_float (vz' -. vz) <= epsilon
@@ -1014,11 +1035,19 @@ let add_if_different vx vy vz nx ny nz tu tv counted =
   with Not_found ->
     let idx = List.length counted in
     idx, (vx, vy, vz, nx, ny, nz, tu, tv) :: counted
+*)
 
 let have_texcoords = ref false
 
-let add_polygons poly idx_array stride triangle_indices counted_pts =
-  let counted = ref counted_pts in
+let invert_poly = ref false
+
+let add_tri pt1 pt2 pt3 indices =
+  if !invert_poly then
+    pt2 :: pt1 :: pt3 :: indices
+  else
+    pt1 :: pt2 :: pt3 :: indices
+
+let add_polygons poly idx_array stride triangle_indices counted =
   let points = (Array.length idx_array) / stride in
   let fetch_texcoords =
     match poly.texcoord with
@@ -1038,54 +1067,53 @@ let add_polygons poly idx_array stride triangle_indices counted_pts =
 	let vpos = idx_array.(idx * stride + voffset)
 	and npos = idx_array.(idx * stride + noffset) in
 	let s, t = fetch_texcoords idx in
-	let vidx, new_counted = add_if_different
+	let vidx = add_if_different
 	  v_array.(vpos).x v_array.(vpos).y v_array.(vpos).z
 	  (norm_accessor npos `x) (norm_accessor npos `y)
-	  (norm_accessor npos `z) s t !counted in
-	face.(idx) <- vidx;
-	counted := new_counted
+	  (norm_accessor npos `z) s t counted in
+	face.(idx) <- vidx
       done;
       let newpoints = match points with
 	3 ->
 	  (*  1
 	     0 2 *)
-	  face.(1) :: face.(0) :: face.(2) :: triangle_indices
+	  add_tri face.(1) face.(0) face.(2) triangle_indices
       | 4 ->
 	  (* 1 2
 	     0 3 *)
-	  face.(2) :: face.(0) :: face.(3)
-	  :: face.(1) :: face.(0) :: face.(2) :: triangle_indices
+	  add_tri face.(2) face.(0) face.(3)
+	    (add_tri face.(1) face.(0) face.(2) triangle_indices)
       | 5 ->
           (*   2
 	     1   3
 	      0 4  *)
-	  face.(2) :: face.(1) :: face.(0)
-	  :: face.(4) :: face.(2) :: face.(0)
-	  :: face.(3) :: face.(2) :: face.(4) :: triangle_indices
+	  add_tri face.(2) face.(1) face.(0)
+	    (add_tri face.(4) face.(2) face.(0)
+	    (add_tri face.(3) face.(2) face.(4) triangle_indices))
       | 6 ->
           (*  2 3
 	     1   4
 	      0 5  *)
-	  face.(2) :: face.(1) :: face.(0)
-	  :: face.(3) :: face.(2) :: face.(0)
-	  :: face.(5) :: face.(3) :: face.(0)
-	  :: face.(4) :: face.(3) :: face.(5) :: triangle_indices
+	  add_tri face.(2) face.(1) face.(0)
+	    (add_tri face.(3) face.(2) face.(0)
+	    (add_tri face.(5) face.(3) face.(0)
+	    (add_tri face.(4) face.(3) face.(5) triangle_indices)))
       | 7 ->
 	  (*   3
 	     2   4
 	    1     5
 	     0   6  *)
-	  face.(2) :: face.(1) :: face.(0)
-	  :: face.(2) :: face.(0) :: face.(3)
-	  :: face.(3) :: face.(0) :: face.(6)
-	  :: face.(4) :: face.(3) :: face.(6)
-	  :: face.(5) :: face.(4) :: face.(6) :: triangle_indices
+	  add_tri face.(2) face.(1) face.(0)
+	    (add_tri face.(2) face.(0) face.(3)
+	    (add_tri face.(3) face.(0) face.(6)
+	    (add_tri face.(4) face.(3) face.(6)
+	    (add_tri face.(5) face.(4) face.(6) triangle_indices))))
       | _ ->
 	Printf.fprintf stderr
 	  "Warning: found difficult polygon (%d sides)\n" points;
 	  triangle_indices in
-      newpoints, !counted
-  | _ -> triangle_indices, !counted
+      newpoints
+  | _ -> triangle_indices
 
 let emit_stripsfile fo strips unique_arr use_texture =
   List.iter
@@ -1119,6 +1147,15 @@ let emit_stripsfile fo strips unique_arr use_texture =
      Printf.fprintf fo "end\n")
    strips
 
+let array_of_point_hash counted =
+  let arr = Array.create (Hashtbl.length counted)
+			 (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) in
+  Hashtbl.iter
+    (fun pt idx ->
+      arr.(idx) <- pt)
+    counted;
+  arr
+
 let strip_geometries_alt geometries outfile =
   have_texcoords := false;
   let glist = geometry_list geometries in
@@ -1127,7 +1164,7 @@ let strip_geometries_alt geometries outfile =
   List.iter
     (fun geom ->
       Printf.printf "Found geometry '%s'\n" geom;
-      let counted = ref []
+      let counted = Hashtbl.create 10
       and triangle_indices = ref []
       and use_texture = ref None in
       List.iter
@@ -1146,41 +1183,40 @@ let strip_geometries_alt geometries outfile =
 	      (fun idx_array ->
 	        match poly.poly_type with
 		  Polygons ->
-		    let new_tri_indices, new_counted
+		    let new_tri_indices
 		      = add_polygons poly idx_array stride !triangle_indices
-				     !counted in
-		    triangle_indices := new_tri_indices;
-		    counted := new_counted
+				     counted in
+		    triangle_indices := new_tri_indices
 		| Triangles ->
 		    let num_tris = (Array.length idx_array) / (stride * 3) in
 		    for tri = 0 to num_tris - 1 do
 		      let slice = Array.sub idx_array (tri * stride * 3)
 					    (stride * 3) in
-		      let new_tri_indices, new_counted
+		      let new_tri_indices
 		        = add_polygons poly slice stride !triangle_indices
-				       !counted in
-		      triangle_indices := new_tri_indices;
-		      counted := new_counted
+				       counted in
+		      triangle_indices := new_tri_indices
 		    done
 		| Polylist ->
 		    ignore (List.fold_left
 		      (fun from poly_len ->
 		        let slice = Array.sub idx_array from
 					      (poly_len * stride) in
-			let new_tri_indices, new_counted
+			let new_tri_indices
 			  = add_polygons poly slice stride !triangle_indices
-					      !counted in
+					      counted in
 			triangle_indices := new_tri_indices;
-			counted := new_counted;
 			from + poly_len * stride)
 		      0
 		      poly.vcount))
 	      poly.polys;
 	  end)
 	geometries;
+      Printf.fprintf stderr "Tristripping...\n"; flush stderr;
       let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
-      Printf.printf "strip output length: %d\n" (List.length strips_out);
-      let unique_arr = Array.of_list (List.rev !counted) in
+      Printf.fprintf stderr "Uniquifying...\n"; flush stderr;
+      let unique_arr = array_of_point_hash counted in
+      Printf.fprintf stderr "Generating output...\n"; flush stderr;
       emit_stripsfile fo strips_out unique_arr !use_texture)
     glist;
   close_out fo
@@ -1208,16 +1244,18 @@ let epsilon = 0.000000001
 let texc_equalish (s, t) (s', t') =
   abs_float (s' -. s) <= epsilon && abs_float (t' -. t) <= epsilon
 
-let uniquify_texcoord point counted =
-  uniquify_point texc_equalish point counted
+let unique_index item counted =
+  try
+    Hashtbl.find counted item
+  with Not_found ->
+    let size = Hashtbl.length counted in
+    Hashtbl.add counted item size;
+    size
 
 let points_equalish (x, y, z) (x', y', z') =
   abs_float (x -. x') <= epsilon
   && abs_float (y -. y') <= epsilon
   && abs_float (z -. z') <= epsilon
-
-let uniquify_pos_norm point counted =
-  uniquify_point points_equalish point counted
 
 (* FUNC:
       int list list  (list of strip indices)
@@ -1234,7 +1272,7 @@ let fold_geometry_strips func geometries acc =
   let glist = geometry_list geometries in
   List.fold_right
     (fun geom acc ->
-      let counted = ref []
+      let counted = Hashtbl.create 10
       and triangle_indices = ref []
       and use_texture = ref None in
       List.iter
@@ -1245,41 +1283,40 @@ let fold_geometry_strips func geometries acc =
 	      (fun idx_array ->
 	        match poly.poly_type with
 		  Polygons ->
-		    let new_tri_indices, new_counted
+		    let new_tri_indices
 		      = add_polygons poly idx_array stride !triangle_indices
-				     !counted in
-		    triangle_indices := new_tri_indices;
-		    counted := new_counted
+				     counted in
+		    triangle_indices := new_tri_indices
 		| Triangles ->
 		    let num_tris = (Array.length idx_array) / (stride * 3) in
 		    for tri = 0 to num_tris - 1 do
 		      let slice = Array.sub idx_array (tri * stride * 3)
 					    (stride * 3) in
-		      let new_tri_indices, new_counted
+		      let new_tri_indices
 		        = add_polygons poly slice stride !triangle_indices
-				       !counted in
-		      triangle_indices := new_tri_indices;
-		      counted := new_counted
+				       counted in
+		      triangle_indices := new_tri_indices
 		    done
 		| Polylist ->
 		    ignore (List.fold_left
 		      (fun from poly_len ->
 		        let slice = Array.sub idx_array from
 					      (poly_len * stride) in
-			let new_tri_indices, new_counted
+			let new_tri_indices
 			  = add_polygons poly slice stride !triangle_indices
-					      !counted in
+					      counted in
 			triangle_indices := new_tri_indices;
-			counted := new_counted;
 			from + poly_len * stride)
 		      0
 		      poly.vcount))
 	      poly.polys;
 	  end)
 	geometries;
+      Printf.fprintf stderr "Tristripping...\n";
       let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
-      Printf.printf "strip output length: %d\n" (List.length strips_out);
-      let unique_arr = Array.of_list (List.rev !counted) in
+      Printf.fprintf stderr "Uniquifying...\n";
+      let unique_arr = array_of_point_hash counted in
+      Printf.fprintf stderr "Generating output...\n";
       func strips_out unique_arr !use_texture acc)
     glist
     acc
@@ -1380,13 +1417,15 @@ let degenerate_tri coord_arr ai bi ci =
   and ta = get_texcoord coord_arr ai
   and tb = get_texcoord coord_arr bi
   and tc = get_texcoord coord_arr ci in
-  let _, points = uniquify_pos_norm pa [] in
-  let _, points = uniquify_pos_norm pb points in
-  let _, points = uniquify_pos_norm pc points in
-  let _, texcs = uniquify_texcoord ta [] in
-  let _, texcs = uniquify_texcoord tb texcs in
-  let _, texcs = uniquify_texcoord tc texcs in
-  List.length points != 3 || List.length texcs != 3
+  let points = Hashtbl.create 3
+  and texcs = Hashtbl.create 3 in
+  ignore (unique_index pa points);
+  ignore (unique_index pb points);
+  ignore (unique_index pc points);
+  ignore (unique_index ta texcs);
+  ignore (unique_index tb texcs);
+  ignore (unique_index tc texcs);
+  Hashtbl.length points != 3 || Hashtbl.length texcs != 3
 
 let vec_nonzero (vx, vy, vz) =
   vx <> 0.0 || vy <> 0.0 || vz <> 0.0
@@ -1397,7 +1436,7 @@ let vec_nonzero (vx, vy, vz) =
 let fill_degenerate_gaps u_arr v_arr coord_arr strip_arr degenerates =
   List.iter
     (fun i ->
-      Printf.printf "Attempting to fill %d\n" i;
+      Printf.fprintf stderr "Attempting to fill %d\n" i;
       let pos = get_pos coord_arr strip_arr.(i)
       and texc = get_texcoord coord_arr strip_arr.(i) in
       for j = 0 to Array.length strip_arr - 1 do
@@ -1405,11 +1444,11 @@ let fill_degenerate_gaps u_arr v_arr coord_arr strip_arr degenerates =
 	and otexc = get_texcoord coord_arr strip_arr.(j) in
 	if points_equalish pos opos && texc_equalish texc otexc then begin
 	  if vec_nonzero u_arr.(j) then begin
-	    Printf.printf "set u at %d from %d\n" i j;
+	    Printf.fprintf stderr "set u at %d from %d\n" i j;
 	    u_arr.(i) <- u_arr.(j)
 	  end;
 	  if vec_nonzero v_arr.(j) then begin
-	    Printf.printf "set v at %d from %d\n" i j;
+	    Printf.fprintf stderr "set v at %d from %d\n" i j;
 	    v_arr.(i) <- v_arr.(j)
 	  end
 	end
@@ -1471,7 +1510,7 @@ let calculate_nbt coord_arr strip =
       v_arr.(i) <- v
     with Degenerate ->
       if i > 0 && i < strip_len - 2 then begin
-        Printf.printf "Trying mid-strip alternative\n";
+        Printf.fprintf stderr "Trying mid-strip alternative\n";
 	let first, second =
 	  if i land 1 == 0 then
 	    i + 2, i + 1
@@ -1485,10 +1524,11 @@ let calculate_nbt coord_arr strip =
 	  u_arr.(i) <- u;
 	  v_arr.(i) <- v
 	with Degenerate ->
-          Printf.printf "%d is degenerate! (Even after trying alternative)\n" i;
+          Printf.fprintf stderr
+	    "%d is degenerate! (Even after trying alternative)\n" i;
 	  degenerates := i :: !degenerates
       end else begin
-	Printf.printf "%d is degenerate!\n" i;
+	Printf.fprintf stderr "%d is degenerate!\n" i;
 	degenerates := i :: !degenerates
       end
     end
@@ -1499,47 +1539,63 @@ let calculate_nbt coord_arr strip =
 let wrap idx =
   if idx < 0 then idx + 65536 else idx
 
+let list_of_pos_norm counted =
+  let arr = Array.create (Hashtbl.length counted) (0.0, 0.0, 0.0) in
+  Hashtbl.iter
+    (fun pt idx ->
+      arr.(idx) <- pt)
+    counted;
+  List.rev (Array.to_list arr)
+
+let list_of_texc counted =
+  let arr = Array.create (Hashtbl.length counted) (0.0, 0.0) in
+  Hashtbl.iter
+    (fun pt idx ->
+      arr.(idx) <- pt)
+    counted;
+  List.rev (Array.to_list arr)
+
 let geometry_to_gx fo name geometries ~nbt =
-  let reindexed_strips, pos, norm, tx =
+  let pos = Hashtbl.create 10
+  and norm = Hashtbl.create 10
+  and tx = Hashtbl.create 10 in
+  let reindexed_strips =
     fold_geometry_strips
       (fun strip_list coord_arr use_texture acc ->
         List.fold_right
-	  (fun strip (strips, pos, norm, tx) ->
+	  (fun strip strips ->
 	    let u_arr, v_arr =
 	      if nbt then
 	        calculate_nbt coord_arr strip
 	      else
 	        Array.make 0 (0.0, 0.0, 0.0), Array.make 0 (0.0, 0.0, 0.0) in
-	    let one_strip, pos', norm', tx', _ =
+	    let one_strip, _ =
 	      List.fold_right
-		(fun idx (out_strip, pos, norm, tx, offset) ->
+		(fun idx (out_strip, offset) ->
 	          let (px, py, pz, nx, ny, nz, ts, tt) = coord_arr.(idx) in
-		  let pidx, pos' = uniquify_pos_norm (px, py, pz) pos
-		  and nidx, norm' = uniquify_pos_norm (nx, ny, nz) norm
-		  and tidx, tx' = uniquify_texcoord (ts, tt) tx in
-		  let bindx, tandx, norm' =
+		  let pidx = unique_index (px, py, pz) pos
+		  and nidx = unique_index (nx, ny, nz) norm
+		  and tidx = unique_index (ts, tt) tx in
+		  let bindx, tandx =
 		    if nbt then
-		      let bindx, norm'
-		        = uniquify_pos_norm u_arr.(offset) norm' in
-		      let tandx, norm'
-		        = uniquify_pos_norm v_arr.(offset) norm' in
-		      wrap (bindx - 1), wrap (tandx - 2), norm'
+		      let bindx = unique_index u_arr.(offset) norm in
+		      let tandx = unique_index v_arr.(offset) norm in
+		      wrap (bindx - 1), wrap (tandx - 2)
 		    else
-		      -1, -1, norm' in
-		  ((pidx, nidx, bindx, tandx, tidx) :: out_strip),
-		  pos', norm', tx', succ offset)
+		      -1, -1 in
+		  ((pidx, nidx, bindx, tandx, tidx) :: out_strip), succ offset)
 		strip
-		([], pos, norm, tx, 0) in
-	      (one_strip :: strips), pos', norm', tx')
+		([], 0) in
+	      (one_strip :: strips))
 	  strip_list
 	  acc)
       geometries
-      ([], [], [], []) in
-  print_vec3_list fo (name ^ "_pos") (List.rev pos);
+      [] in
+  print_vec3_list fo (name ^ "_pos") (list_of_pos_norm pos);
   Printf.fprintf fo "\n";
-  print_vec3_list fo (name ^ "_norm") (List.rev norm);
+  print_vec3_list fo (name ^ "_norm") (list_of_pos_norm norm);
   Printf.fprintf fo "\n";
-  print_vec2_list fo (name ^ "_texidx") (List.rev tx);
+  print_vec2_list fo (name ^ "_texidx") (list_of_texc tx);
   Printf.fprintf fo "\n";
   print_strips fo (name ^ "_strip") reindexed_strips ~nbt;
   print_strip_lengths fo (name ^ "_lengths") reindexed_strips;
@@ -1571,6 +1627,8 @@ let _ =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
      "-n", Arg.Set_string geom_name, "Set geometry name";
      "-c", Arg.Set generate_c, "Generate C source";
+     "-yz", Arg.Set flip_yz, "Swap Y/Z coordinates";
+     "-i", Arg.Set invert_poly, "Inside-out polygons (use with -yz)";
      "-t", Arg.Set gen_binormal_tangent, "Generate binormals & tangents"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
   Arg.parse argspec (fun name -> infile := name) usage;
@@ -1592,7 +1650,10 @@ let _ =
     with x ->
       prerr_endline "Parse error:";
       raise x in
-  let dtd_source = Pxp_types.from_file "collada.auto.dtd" in
+  let dtd_filename = Filename.concat (Filename.dirname Sys.argv.(0))
+		       "collada.auto.dtd" in
+  let dtd_source = Pxp_types.from_file dtd_filename in
+  Printf.fprintf stderr "Parsing...\n"; flush stderr;
   let dtd = Pxp_dtd_parser.parse_dtd_entity config dtd_source in
   let doc = Pxp_tree_parser.parse_document_entity
 	      ~transform_dtd:(fun _ -> dtd) config source spec in
@@ -1612,7 +1673,10 @@ let _ =
   (* print_geometries !geometries; *)
   if !generate_c then begin
     let fo = open_out !outfile in
+    Printf.fprintf stderr "Converting to GX format...\n"; flush stderr;
     geometry_to_gx fo !geom_name !geometries ~nbt:!gen_binormal_tangent;
     close_out fo
-  end else
+  end else begin
+    Printf.fprintf stderr "Converting to strips file...\n";
     strip_geometries_alt !geometries dest
+  end
