@@ -43,6 +43,7 @@ type polygon =
     mutable normal : (string * int) option;
     mutable texcoord : (string * int) option;
     mutable uv : (string * int) option;
+    mutable colour : (string * int) option;
     mutable polys : int array list;
     mutable poly_type : poly_type;
     mutable vcount : int list;
@@ -432,6 +433,7 @@ type semantic =
   | Normal
   | Texcoord
   | UV
+  | Colour
 
 let parse_input input_node =
   let source = resolve_local_ref (input_node#required_string_attribute "source")
@@ -442,6 +444,7 @@ let parse_input input_node =
   | "NORMAL" -> Normal
   | "TEXCOORD" -> Texcoord
   | "UV" -> UV
+  | "COLOR" -> Colour
   | _ -> failwith "Unknown semantic" in
   sem, source, offset
 
@@ -483,6 +486,7 @@ let parse_polygons geom_id count poly_nodes ~poly_type ~material =
   and normal = ref None
   and texcoord = ref None
   and uv = ref None
+  and colour = ref None
   and polys = ref []
   and vcount = ref [] in
   List.iter
@@ -499,6 +503,7 @@ let parse_polygons geom_id count poly_nodes ~poly_type ~material =
 	  | Normal -> normal := Some (source, ioffset)
 	  | Texcoord -> texcoord := Some (source, ioffset)
 	  | UV -> uv := Some (source, ioffset)
+	  | Colour -> colour := Some (source, ioffset)
 	  | _ -> failwith "Unexpected source in polygons"
 	  end
       | Pxp_document.T_element "p" ->
@@ -519,6 +524,7 @@ let parse_polygons geom_id count poly_nodes ~poly_type ~material =
       normal = !normal;
       texcoord = !texcoord;
       uv = !uv;
+      colour = !colour;
       polys = !polys;
       poly_type = poly_type;
       vcount = !vcount;
@@ -714,6 +720,11 @@ let uv_offset poly =
     None -> raise Not_found
   | Some (_, o) -> o
 
+let colour_offset poly =
+  match poly.colour with
+    None -> raise Not_found
+  | Some (_, o) -> o
+
 let poly_stride poly =
   let highest = ref 0 in
   let increase_to fn =
@@ -726,6 +737,7 @@ let poly_stride poly =
   increase_to normal_offset;
   increase_to texcoord_offset;
   increase_to uv_offset;
+  increase_to colour_offset;
   succ !highest
 
 (* I am going straight to programmer hell for this.  *)
@@ -981,7 +993,7 @@ let strip_geometries geometries =
     glist
 
 let add_if_different vx vy vz nx ny nz tu tv counted =
-  let epsilon = 0.000001 in
+  let epsilon = 0.000000001 in
   let rec scan idx = function
     (vx', vy', vz', nx', ny', nz', tu', tv') :: more ->
       if abs_float (vx' -. vx) <= epsilon
@@ -1191,7 +1203,7 @@ let uniquify_point close_p point counted =
      let idx = List.length counted in
      idx, point :: counted
 
-let epsilon = 0.000001
+let epsilon = 0.000000001
 
 let texc_equalish (s, t) (s', t') =
   abs_float (s' -. s) <= epsilon && abs_float (t' -. t) <= epsilon
@@ -1424,8 +1436,8 @@ let get_uv_from_tri coord_arr ai bi ci =
   and v = vec_scale (inv_or_zero denom) v_num in
   let orig_norm = get_norm coord_arr ai in
   (* Using the original normal lets us do better for curved surfaces.  *)
-  if true then
-    vec_norm (vec_cross orig_norm v), vec_norm (vec_cross orig_norm u)
+  if false then
+    vec_norm (vec_cross v orig_norm), vec_norm (vec_cross orig_norm u)
   else
     vec_norm u, vec_norm v
 

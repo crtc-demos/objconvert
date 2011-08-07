@@ -91,6 +91,7 @@
 
 <!ELEMENT input EMPTY >
 <!ATTLIST input offset NMTOKEN #IMPLIED >
+<!ATTLIST input set NMTOKEN #IMPLIED >
 <!ATTLIST input semantic NMTOKEN #REQUIRED >
 <!ATTLIST input source CDATA #REQUIRED >
 
