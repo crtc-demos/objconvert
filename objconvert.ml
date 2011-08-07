@@ -1545,7 +1545,7 @@ let list_of_pos_norm counted =
     (fun pt idx ->
       arr.(idx) <- pt)
     counted;
-  List.rev (Array.to_list arr)
+  Array.to_list arr
 
 let list_of_texc counted =
   let arr = Array.create (Hashtbl.length counted) (0.0, 0.0) in
@@ -1553,7 +1553,7 @@ let list_of_texc counted =
     (fun pt idx ->
       arr.(idx) <- pt)
     counted;
-  List.rev (Array.to_list arr)
+  Array.to_list arr
 
 let geometry_to_gx fo name geometries ~nbt =
   let pos = Hashtbl.create 10
