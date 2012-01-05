@@ -39,6 +39,8 @@
 <!ATTLIST camera id CDATA #IMPLIED >
 <!ATTLIST camera name CDATA #IMPLIED >
 
+<!ELEMENT bump ( texture )* >
+
 <!ELEMENT color ( #PCDATA ) >
 
 <!ELEMENT constant_attenuation ( #PCDATA ) >
@@ -57,6 +59,8 @@
 <!ELEMENT double_sided ( #PCDATA ) >
 
 <!ELEMENT falloff_angle ( #PCDATA ) >
+
+<!ELEMENT falloff_exponent ( #PCDATA ) >
 
 <!ELEMENT float ( #PCDATA ) >
 
@@ -233,12 +237,12 @@
 <!ATTLIST source id CDATA #IMPLIED >
 <!ATTLIST source name CDATA #IMPLIED >
 
-<!ELEMENT spot ( color | constant_attenuation | linear_attenuation | falloff_angle )+ >
+<!ELEMENT spot ( color | constant_attenuation | linear_attenuation | quadratic_attenuation | falloff_angle | falloff_exponent )+ >
 
 <!ELEMENT surface ( init_from | format )+ >
 <!ATTLIST surface type NMTOKEN #REQUIRED >
 
-<!ELEMENT technique ( E3DPanel | phong | lambert | param | program | rendererset | scene_settings | adapt_thresh | area_shape | area_size | area_sizex | area_sizey | area_sizez | atm_distance_factor | atm_extinction_factor | atm_turbidity | att1 | att2 | backscattered_light | bias | blue | buffers | bufflag | bufsize | buftype | clipend | clipsta | compressthresh | dist | energy | falloff_type | filtertype | flag | gamma | green | halo_intensity | horizon_brightness | mode | ray_samp | ray_samp_method | ray_samp_type | ray_sampy | ray_sampz | red | samp | shadhalostep | shadow_b | shadow_g | shadow_r | shadspotsize | sky_colorspace | sky_exposure | skyblendfac | skyblendtype | soft | spotblend | spotsize | spread | sun_brightness | sun_effect_type | sun_intensity | sun_size | type | double_sided )* >
+<!ELEMENT technique ( E3DPanel | bump | phong | lambert | param | program | rendererset | scene_settings | adapt_thresh | area_shape | area_size | area_sizex | area_sizey | area_sizez | atm_distance_factor | atm_extinction_factor | atm_turbidity | att1 | att2 | backscattered_light | bias | blue | buffers | bufflag | bufsize | buftype | clipend | clipsta | compressthresh | dist | energy | extra | falloff_type | filtertype | flag | gamma | green | halo_intensity | horizon_brightness | mode | ray_samp | ray_samp_method | ray_samp_type | ray_sampy | ray_sampz | red | samp | shadhalostep | shadow_b | shadow_g | shadow_r | shadspotsize | sky_colorspace | sky_exposure | skyblendfac | skyblendtype | soft | spotblend | spotsize | spread | sun_brightness | sun_effect_type | sun_intensity | sun_size | type | double_sided )* >
 <!ATTLIST technique profile CDATA #IMPLIED >
 <!ATTLIST technique id CDATA #IMPLIED >
 <!ATTLIST technique sid CDATA #IMPLIED >

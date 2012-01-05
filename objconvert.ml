@@ -413,6 +413,9 @@ let parse_technique id sid nodes =
       | Pxp_document.T_element "program" ->
           (* Ignore. *)
           ()
+      | Pxp_document.T_element "extra" ->
+          (* Ignore. *)
+	  ()
       | _ -> bad_node node "below technique")
     nodes
 
@@ -1267,9 +1270,8 @@ let points_equalish (x, y, z) (x', y', z') =
      'b
 *)
 
-let fold_geometry_strips func geometries acc =
+let fold_geometry_strips func geometries glist acc =
   have_texcoords := false;
-  let glist = geometry_list geometries in
   List.fold_right
     (fun geom acc ->
       let counted = Hashtbl.create 10
@@ -1555,10 +1557,15 @@ let list_of_texc counted =
     counted;
   Array.to_list arr
 
-let geometry_to_gx fo name geometries ~nbt =
+let geometry_to_gx fo name geometries ~single_obj ~nbt =
   let pos = Hashtbl.create 10
   and norm = Hashtbl.create 10
   and tx = Hashtbl.create 10 in
+  let glist = if single_obj = "" then
+    geometry_list geometries
+  else begin
+    [single_obj]
+  end in
   let reindexed_strips =
     fold_geometry_strips
       (fun strip_list coord_arr use_texture acc ->
@@ -1590,6 +1597,7 @@ let geometry_to_gx fo name geometries ~nbt =
 	  strip_list
 	  acc)
       geometries
+      glist
       [] in
   print_vec3_list fo (name ^ "_pos") (list_of_pos_norm pos);
   Printf.fprintf fo "\n";
@@ -1622,6 +1630,8 @@ let _ =
   and infile = ref ""
   and geom_name = ref ""
   and generate_c = ref false
+  and select_object = ref ""
+  and list_geom = ref false
   and gen_binormal_tangent = ref false in
   let argspec =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
@@ -1629,10 +1639,12 @@ let _ =
      "-c", Arg.Set generate_c, "Generate C source";
      "-yz", Arg.Set flip_yz, "Swap Y/Z coordinates";
      "-i", Arg.Set invert_poly, "Inside-out polygons (use with -yz)";
+     "-s", Arg.Set_string select_object, "Select individual object";
+     "-l", Arg.Set list_geom, "Output list of geometries";
      "-t", Arg.Set gen_binormal_tangent, "Generate binormals & tangents"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
   Arg.parse argspec (fun name -> infile := name) usage;
-  if !infile = "" || !outfile = "" then begin
+  if not !list_geom && (!infile = "" || !outfile = "") then begin
     if !infile = "" then
       prerr_endline "Input file missing."
     else
@@ -1671,10 +1683,19 @@ let _ =
   do_later := [];
   (* print_vertices vertices; *)
   (* print_geometries !geometries; *)
+  if !list_geom then begin
+    let glist = geometry_list !geometries in
+    Printf.fprintf stderr "Geometries in input file:\n";
+    List.iter
+      (fun geom -> Printf.fprintf stderr "  %s\n" geom)
+      glist;
+    exit 0
+  end;
   if !generate_c then begin
     let fo = open_out !outfile in
     Printf.fprintf stderr "Converting to GX format...\n"; flush stderr;
-    geometry_to_gx fo !geom_name !geometries ~nbt:!gen_binormal_tangent;
+    geometry_to_gx fo !geom_name !geometries ~single_obj:!select_object
+		   ~nbt:!gen_binormal_tangent;
     close_out fo
   end else begin
     Printf.fprintf stderr "Converting to strips file...\n";
