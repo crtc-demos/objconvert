@@ -1438,7 +1438,7 @@ let vec_nonzero (vx, vy, vz) =
 let fill_degenerate_gaps u_arr v_arr coord_arr strip_arr degenerates =
   List.iter
     (fun i ->
-      Printf.fprintf stderr "Attempting to fill %d\n" i;
+      (*Printf.fprintf stderr "Attempting to fill %d\n" i;*)
       let pos = get_pos coord_arr strip_arr.(i)
       and texc = get_texcoord coord_arr strip_arr.(i) in
       for j = 0 to Array.length strip_arr - 1 do
@@ -1446,11 +1446,11 @@ let fill_degenerate_gaps u_arr v_arr coord_arr strip_arr degenerates =
 	and otexc = get_texcoord coord_arr strip_arr.(j) in
 	if points_equalish pos opos && texc_equalish texc otexc then begin
 	  if vec_nonzero u_arr.(j) then begin
-	    Printf.fprintf stderr "set u at %d from %d\n" i j;
+	    (*Printf.fprintf stderr "set u at %d from %d\n" i j;*)
 	    u_arr.(i) <- u_arr.(j)
 	  end;
 	  if vec_nonzero v_arr.(j) then begin
-	    Printf.fprintf stderr "set v at %d from %d\n" i j;
+	    (*Printf.fprintf stderr "set v at %d from %d\n" i j;*)
 	    v_arr.(i) <- v_arr.(j)
 	  end
 	end
@@ -1512,7 +1512,7 @@ let calculate_nbt coord_arr strip =
       v_arr.(i) <- v
     with Degenerate ->
       if i > 0 && i < strip_len - 2 then begin
-        Printf.fprintf stderr "Trying mid-strip alternative\n";
+        (*Printf.fprintf stderr "Trying mid-strip alternative\n";*)
 	let first, second =
 	  if i land 1 == 0 then
 	    i + 2, i + 1
@@ -1522,7 +1522,7 @@ let calculate_nbt coord_arr strip =
 	and ci = strip_arr.(second) in
 	try
 	  let u, v = get_uv_from_tri coord_arr ai bi ci in
-	  print_endline "Mid-strip alternative successful!";
+	  (*Printf.fprintf stderr "Mid-strip alternative successful!\n";*)
 	  u_arr.(i) <- u;
 	  v_arr.(i) <- v
 	with Degenerate ->
@@ -1530,7 +1530,7 @@ let calculate_nbt coord_arr strip =
 	    "%d is degenerate! (Even after trying alternative)\n" i;
 	  degenerates := i :: !degenerates
       end else begin
-	Printf.fprintf stderr "%d is degenerate!\n" i;
+	(*Printf.fprintf stderr "%d is degenerate!\n" i;*)
 	degenerates := i :: !degenerates
       end
     end
