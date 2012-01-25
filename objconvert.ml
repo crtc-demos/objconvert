@@ -1557,14 +1557,14 @@ let list_of_texc counted =
     counted;
   Array.to_list arr
 
-let geometry_to_gx fo name geometries ~single_obj ~nbt =
+let geometry_to_gx fo name geometries ~select_objects ~nbt =
   let pos = Hashtbl.create 10
   and norm = Hashtbl.create 10
   and tx = Hashtbl.create 10 in
-  let glist = if single_obj = "" then
+  let glist = if select_objects = [] then
     geometry_list geometries
   else begin
-    [single_obj]
+    select_objects
   end in
   let reindexed_strips =
     fold_geometry_strips
@@ -1630,16 +1630,18 @@ let _ =
   and infile = ref ""
   and geom_name = ref ""
   and generate_c = ref false
-  and select_object = ref ""
+  and selected_objects = ref []
   and list_geom = ref false
   and gen_binormal_tangent = ref false in
+  let add_selection obj =
+    selected_objects := obj :: !selected_objects in
   let argspec =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
      "-n", Arg.Set_string geom_name, "Set geometry name";
      "-c", Arg.Set generate_c, "Generate C source";
      "-yz", Arg.Set flip_yz, "Swap Y/Z coordinates";
      "-i", Arg.Set invert_poly, "Inside-out polygons (use with -yz)";
-     "-s", Arg.Set_string select_object, "Select individual object";
+     "-s", Arg.String add_selection, "Select geometry for inclusion in output";
      "-l", Arg.Set list_geom, "Output list of geometries";
      "-t", Arg.Set gen_binormal_tangent, "Generate binormals & tangents"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
@@ -1694,7 +1696,7 @@ let _ =
   if !generate_c then begin
     let fo = open_out !outfile in
     Printf.fprintf stderr "Converting to GX format...\n"; flush stderr;
-    geometry_to_gx fo !geom_name !geometries ~single_obj:!select_object
+    geometry_to_gx fo !geom_name !geometries ~select_objects:!selected_objects
 		   ~nbt:!gen_binormal_tangent;
     close_out fo
   end else begin
