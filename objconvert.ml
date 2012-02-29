@@ -79,7 +79,9 @@ and phong =
 and lambert =
   {
     mutable l_ambient : colour option;
-    mutable l_diffuse : covering option
+    mutable l_diffuse : covering option;
+    mutable l_emission : colour option;
+    mutable l_index_of_refraction : float option
   }
 
 and colour =
@@ -390,7 +392,9 @@ let parse_lambert id lambert_parts =
   let lambertinf =
     {
       l_ambient = None;
-      l_diffuse = None
+      l_diffuse = None;
+      l_emission = None;
+      l_index_of_refraction = None
     } in
   List.iter
     (fun node ->
@@ -399,6 +403,11 @@ let parse_lambert id lambert_parts =
 	  lambertinf.l_ambient <- Some (parse_colour (node_child node))
       | Pxp_document.T_element "diffuse" ->
           lambertinf.l_diffuse <- Some (parse_covering (node_child node))
+      | Pxp_document.T_element "emission" ->
+          lambertinf.l_emission <- Some (parse_colour (node_child node))
+      | Pxp_document.T_element "index_of_refraction" ->
+	  lambertinf.l_index_of_refraction
+	    <- Some (parse_float (node_child node))
       | _ -> bad_node node "below lambert")
     lambert_parts
 

@@ -171,7 +171,9 @@
 
 <!ELEMENT phong ( ambient | emission | diffuse | specular | shininess | reflective | reflectivity | transparent | transparency | index_of_refraction )+ >
 
-<!ELEMENT lambert ( ambient | diffuse )+ >
+<!ELEMENT directional ( color )* >
+
+<!ELEMENT lambert ( ambient | diffuse | emission | index_of_refraction )+ >
 
 <!ELEMENT ambient ( color ) >
 
@@ -247,7 +249,7 @@
 <!ATTLIST technique id CDATA #IMPLIED >
 <!ATTLIST technique sid CDATA #IMPLIED >
 
-<!ELEMENT technique_common ( accessor | orthographic | perspective | point | instance_material | spot | ambient )* >
+<!ELEMENT technique_common ( accessor | orthographic | perspective | point | instance_material | spot | ambient | directional )* >
 
 <!ELEMENT xfov ( #PCDATA ) >
 
