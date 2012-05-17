@@ -7,7 +7,7 @@
 	OBJS = Adjacency.o RevisitedRadix.o Striper.o CustomArray.o \
 	       StdAfx.o CamlStrips.o
 
-	TARGET = dllstrips.so
+	TARGET = libstrips.so
 
 	LIB = strips.cma
 	LIBNAT = strips.cmxa
