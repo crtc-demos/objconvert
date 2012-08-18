@@ -8,9 +8,9 @@ extern "C" {
 #include <caml/bigarray.h>
 
 CAMLprim value
-run_strips (value v_topology)
+run_strips (value v_topology, value degenerate_tristrips)
 {
-  CAMLparam1 (v_topology);
+  CAMLparam2 (v_topology, degenerate_tristrips);
   long num_faces, inp_length = Bigarray_val (v_topology)->dim[0];
   udword *topology = (udword *) Data_bigarray_val (v_topology);
   CAMLlocal3 (result_strip, result_strip_list, cons);
@@ -36,7 +36,9 @@ run_strips (value v_topology)
   sc.DFaces = topology;
   sc.NbFaces = num_faces;
   sc.AskForWords = false;
-  sc.ConnectAllStrips = false;
+  sc.ConnectAllStrips = Bool_val (degenerate_tristrips);
+  /*fprintf (stderr, "connecting all strips: %s (%d)\n",
+	   sc.ConnectAllStrips ? "yes" : "no", sc.ConnectAllStrips);*/
   sc.OneSided = true;
   sc.SGIAlgorithm = false;
   

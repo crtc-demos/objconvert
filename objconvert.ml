@@ -1225,7 +1225,8 @@ let strip_geometries_alt geometries outfile =
 	  end)
 	geometries;
       Printf.fprintf stderr "Tristripping...\n"; flush stderr;
-      let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
+      let strips_out =
+        Strips.run_strips (Array.of_list !triangle_indices) false in
       Printf.fprintf stderr "Uniquifying...\n"; flush stderr;
       let unique_arr = array_of_point_hash counted in
       Printf.fprintf stderr "Generating output...\n"; flush stderr;
@@ -1279,7 +1280,7 @@ let points_equalish (x, y, z) (x', y', z') =
      'b
 *)
 
-let fold_geometry_strips func geometries glist acc =
+let fold_geometry_strips ?(join_strips=false) func geometries glist acc =
   have_texcoords := false;
   List.fold_right
     (fun geom acc ->
@@ -1324,7 +1325,8 @@ let fold_geometry_strips func geometries glist acc =
 	  end)
 	geometries;
       Printf.fprintf stderr "Tristripping...\n";
-      let strips_out = Strips.run_strips (Array.of_list !triangle_indices) in
+      let strips_out =
+        Strips.run_strips (Array.of_list !triangle_indices) join_strips in
       Printf.fprintf stderr "Uniquifying...\n";
       let unique_arr = array_of_point_hash counted in
       Printf.fprintf stderr "Generating output...\n";
@@ -1550,20 +1552,28 @@ let calculate_nbt coord_arr strip =
 let wrap idx =
   if idx < 0 then idx + 65536 else idx
 
-let list_of_pos_norm counted =
+let array_of_pos_norm counted =
   let arr = Array.create (Hashtbl.length counted) (0.0, 0.0, 0.0) in
   Hashtbl.iter
     (fun pt idx ->
       arr.(idx) <- pt)
     counted;
+  arr
+
+let list_of_pos_norm counted =
+  let arr = array_of_pos_norm counted in
   Array.to_list arr
 
-let list_of_texc counted =
+let array_of_texc counted =
   let arr = Array.create (Hashtbl.length counted) (0.0, 0.0) in
   Hashtbl.iter
     (fun pt idx ->
       arr.(idx) <- pt)
     counted;
+  arr
+
+let list_of_texc counted =
+  let arr = array_of_texc counted in
   Array.to_list arr
 
 let geometry_to_gx fo name geometries ~select_objects ~nbt =
@@ -1619,6 +1629,226 @@ let geometry_to_gx fo name geometries ~select_objects ~nbt =
   Printf.fprintf fo "\n";
   print_strip_ptrs fo (name ^ "_strips") (name ^ "_strip") reindexed_strips
 
+(* Allow control over which attributes are used.  *)
+
+type gl_attr =
+    GL_POS
+  | GL_NORM
+  | GL_VTXCOLOUR
+  | GL_TEXCOORD
+  | GL_BINORM
+  | GL_TANGENT
+
+type gl_fmt = GL_FLOAT
+
+let gl_attr_order =
+  [GL_POS; GL_NORM; GL_VTXCOLOUR; GL_TEXCOORD; GL_BINORM; GL_TANGENT]
+
+(* Attribute formats.  Allow overriding at some point in the future...  *)
+
+let attr_formats =
+  [GL_POS, GL_FLOAT;
+   GL_NORM, GL_FLOAT;
+   GL_VTXCOLOUR, GL_FLOAT;
+   GL_TEXCOORD, GL_FLOAT;
+   GL_BINORM, GL_FLOAT;
+   GL_TANGENT, GL_FLOAT]
+
+let fmt_size = function
+  GL_FLOAT -> 4
+
+let attr_elems = function
+    GL_POS -> 3
+  | GL_NORM -> 3
+  | GL_VTXCOLOUR -> 4
+  | GL_TEXCOORD -> 2
+  | GL_BINORM -> 3
+  | GL_TANGENT -> 3
+
+let vertex_size attr fmt =
+  let elsize = fmt_size fmt in
+  attr_elems attr * elsize
+
+let pad_size sz padding =
+  let padm1 = pred padding in
+  (sz + padm1) land (lnot padm1)
+
+let padded_vertex_size attr fmt =
+  let sz = vertex_size attr fmt in
+  pad_size sz 4
+
+let attr_space attr attrs fmts =
+  if List.mem attr attrs then
+    let fmt = List.assoc attr fmts in
+    padded_vertex_size attr fmt
+  else
+    0
+
+let prev_attr = function
+    GL_POS -> raise Not_found
+  | GL_NORM -> GL_POS
+  | GL_VTXCOLOUR -> GL_NORM
+  | GL_TEXCOORD -> GL_VTXCOLOUR
+  | GL_BINORM -> GL_TEXCOORD
+  | GL_TANGENT -> GL_BINORM
+
+let rec attr_offset attr attrs fmts =
+  match attr with
+    GL_POS -> 0
+  | _ ->
+      let prev = prev_attr attr in
+      attr_space prev attrs fmts + attr_offset prev attrs fmts
+
+let total_vertex_size attrs fmts =
+  List.fold_left
+    (fun tot attr -> tot + attr_space attr attrs fmts)
+    0
+    gl_attr_order
+
+let string_of_gl_fmt = function
+  GL_FLOAT -> "GLfloat"
+
+let string_of_attr = function
+    GL_POS -> "pos"
+  | GL_NORM -> "norm"
+  | GL_VTXCOLOUR -> "colour"
+  | GL_TEXCOORD -> "texcoord"
+  | GL_BINORM -> "binorm"
+  | GL_TANGENT -> "tangent"
+
+let print_gl_vertex fo name attrs fmts =
+  Printf.fprintf fo "typedef struct {\n";
+  List.iter
+    (fun attr ->
+      if List.mem attr attrs then
+        let fmt = List.assoc attr fmts in
+	Printf.fprintf fo "  %s %s[%d];\n" (string_of_gl_fmt fmt)
+	  (string_of_attr attr) (attr_elems attr))
+    gl_attr_order;
+  Printf.fprintf fo "} %s_vertex;\n" name
+
+let string_of_attrmask attrs =
+  String.concat " | "
+    (List.map
+      (function
+        GL_POS -> "ATTR_MASK_POS"
+      | GL_NORM -> "ATTR_MASK_NORM"
+      | GL_VTXCOLOUR -> "ATTR_MASK_VTXCOLOUR"
+      | GL_TEXCOORD -> "ATTR_MASK_TEXCOORD"
+      | GL_BINORM -> "ATTR_MASK_BINORM"
+      | GL_TANGENT -> "ATTR_MASK_TANGENT")
+      attrs)
+
+(* For GLES, we want to use "array of structs" format for the vertex data,
+   since that's the recommended format for maximising cache locality.  *)
+
+let geometry_to_gles fo name geometries ~select_objects ~attrs ~join_strips =
+  let pos = Hashtbl.create 10
+  and norm = Hashtbl.create 10
+  and tx = Hashtbl.create 10 in
+  let nbt = List.mem GL_BINORM attrs || List.mem GL_TANGENT attrs in
+  let glist = if select_objects = [] then
+    geometry_list geometries
+  else begin
+    select_objects
+  end in
+  let reindexed_strips =
+    fold_geometry_strips
+      ~join_strips
+      (fun strip_list coord_arr use_texture acc ->
+        List.fold_right
+	  (fun strip strips ->
+	    let u_arr, v_arr =
+	      if nbt then
+	        calculate_nbt coord_arr strip
+	      else
+	        Array.make 0 (0.0, 0.0, 0.0), Array.make 0 (0.0, 0.0, 0.0) in
+	    let one_strip, _ =
+	      List.fold_right
+		(fun idx (out_strip, offset) ->
+	          let (px, py, pz, nx, ny, nz, ts, tt) = coord_arr.(idx) in
+		  let pidx = unique_index (px, py, pz) pos
+		  and nidx = unique_index (nx, ny, nz) norm
+		  and tidx = unique_index (ts, tt) tx in
+		  let bindx, tandx =
+		    if nbt then
+		      let bindx = unique_index u_arr.(offset) norm in
+		      let tandx = unique_index v_arr.(offset) norm in
+		      bindx, tandx
+		    else
+		      -1, -1 in
+		  ((pidx, nidx, bindx, tandx, tidx) :: out_strip), succ offset)
+		strip
+		([], 0) in
+	      (one_strip :: strips))
+	  strip_list
+	  acc)
+      geometries
+      glist
+      [] in
+  if List.mem GL_TEXCOORD attrs && not !have_texcoords then begin
+    flush stdout;
+    prerr_endline "Requested u/v texcoords but there don't seem to be any?";
+    exit 1
+  end;
+  print_gl_vertex fo name attrs attr_formats;
+  let pos_arr = array_of_pos_norm pos
+  and norm_arr = array_of_pos_norm norm
+  and texc_arr = array_of_texc tx in
+  let nstrips = List.length reindexed_strips in
+  if nstrips > 1 || not join_strips then begin
+    flush stdout;
+    Printf.fprintf stderr "Generated %d strip%s\n" nstrips
+      (if nstrips > 1 then "s" else "");
+    prerr_endline "Too many strips for GLES mode (use -d and/or -s)";
+    exit 1
+  end;
+  let strip = List.hd reindexed_strips in
+  Printf.fprintf fo "static %s_vertex %s_vertices[] = {\n" name name;
+  List.fold_right
+    (fun (pidx, nidx, bindx, tandx, tidx) _ ->
+      Printf.fprintf fo "  {\n";
+      if List.mem GL_POS attrs then begin
+	let x, y, z = pos_arr.(pidx) in
+	Printf.fprintf fo "    { %f, %f, %f },\n" x y z
+      end;
+      if List.mem GL_NORM attrs then begin
+	let x, y, z = norm_arr.(nidx) in
+	Printf.fprintf fo "    { %f, %f, %f },\n" x y z
+      end;
+      if List.mem GL_VTXCOLOUR attrs then begin
+	failwith "unimplemented"
+      end;
+      if List.mem GL_TEXCOORD attrs then begin
+	let u, v = texc_arr.(nidx) in
+	Printf.fprintf fo "    { %f, %f },\n" u v
+      end;
+      if List.mem GL_BINORM attrs then begin
+	let x, y, z = norm_arr.(nidx) in
+	Printf.fprintf fo "    { %f, %f, %f },\n" x y z
+      end;
+      if List.mem GL_TANGENT attrs then begin
+	let x, y, z = norm_arr.(nidx) in
+	Printf.fprintf fo "    { %f, %f, %f },\n" x y z
+      end;
+      Printf.fprintf fo "  },\n")
+    strip
+    ();
+  Printf.fprintf fo "};\n";
+  Printf.fprintf fo "static const unsigned int %s_attrs = %s;\n"
+    name (string_of_attrmask attrs);
+  let uname = String.uppercase name in
+  ignore (List.fold_left
+    (fun anum attr ->
+      if List.mem attr attrs then begin
+        Printf.fprintf fo "#define %s_ATTR_%s %d\n" uname
+	  (String.uppercase (string_of_attr attr)) anum;
+	succ anum
+      end else
+        anum)
+    0
+    gl_attr_order)
+
 let strip_blank_data doc_root =
   let is_blank foo =
     let all_blank = ref true in
@@ -1639,20 +1869,26 @@ let _ =
   and infile = ref ""
   and geom_name = ref ""
   and generate_c = ref false
+  and generate_gl = ref false
+  and join_strips = ref false
   and selected_objects = ref []
   and list_geom = ref false
-  and gen_binormal_tangent = ref false in
+  and gen_binormal_tangent = ref false
+  and emit_texcoords = ref false in
   let add_selection obj =
     selected_objects := obj :: !selected_objects in
   let argspec =
     ["-o", Arg.Set_string outfile, "Set output file (file.strips)";
      "-n", Arg.Set_string geom_name, "Set geometry name";
-     "-c", Arg.Set generate_c, "Generate C source";
+     "-c", Arg.Set generate_c, "Generate C source (GameCube/Wii GX)";
+     "-gl", Arg.Set generate_gl, "Generate C source (GLES)";
+     "-d", Arg.Set join_strips, "Join all strips into one";
      "-yz", Arg.Set flip_yz, "Swap Y/Z coordinates";
      "-i", Arg.Set invert_poly, "Inside-out polygons (use with -yz)";
      "-s", Arg.String add_selection, "Select geometry for inclusion in output";
      "-l", Arg.Set list_geom, "Output list of geometries";
-     "-t", Arg.Set gen_binormal_tangent, "Generate binormals & tangents"]
+     "-t", Arg.Set gen_binormal_tangent, "Generate binormals & tangents";
+     "-uv", Arg.Set emit_texcoords, "Include U/V texture coordinates"]
   and usage = "Usage: objconvert [options] infile -o outfile" in
   Arg.parse argspec (fun name -> infile := name) usage;
   if not !list_geom && (!infile = "" || !outfile = "") then begin
@@ -1665,6 +1901,10 @@ let _ =
   end;
   if !geom_name = "" then
     geom_name := Filename.chop_extension (Filename.basename !outfile);
+  if !generate_c && !generate_gl then begin
+    prerr_endline "Select only one of -c/-gl options";
+    exit 1
+  end;
   let config = Pxp_types.default_config
   and spec = Pxp_tree_parser.default_spec
   and source, dest =
@@ -1702,7 +1942,20 @@ let _ =
       glist;
     exit 0
   end;
-  if !generate_c then begin
+  if !generate_gl then begin
+    let fo = open_out !outfile in
+    Printf.fprintf stderr "Converting to GLES format...\n"; flush stderr;
+    let attrlist =
+      if !gen_binormal_tangent then
+        [GL_POS; GL_NORM; GL_BINORM; GL_TANGENT]
+      else
+        [GL_POS; GL_NORM] in
+    let attrlist =
+      if !emit_texcoords then GL_TEXCOORD :: attrlist else attrlist in
+    geometry_to_gles fo !geom_name !geometries ~select_objects:!selected_objects
+			~attrs:attrlist ~join_strips:!join_strips;
+    close_out fo
+  end else if !generate_c then begin
     let fo = open_out !outfile in
     Printf.fprintf stderr "Converting to GX format...\n"; flush stderr;
     geometry_to_gx fo !geom_name !geometries ~select_objects:!selected_objects
