@@ -1835,17 +1835,23 @@ let geometry_to_gles fo name geometries ~select_objects ~attrs ~join_strips =
     strip
     ();
   Printf.fprintf fo "};\n";
-  Printf.fprintf fo "static const unsigned int %s_attrs = %s;\n"
-    name (string_of_attrmask attrs);
   let uname = String.uppercase name in
+  Printf.fprintf fo "#define %s_ATTRS (%s)\n"
+    uname (string_of_attrmask attrs);
   ignore (List.fold_left
     (fun anum attr ->
+      let aname = string_of_attr attr in
+      let uattr = (String.uppercase aname) in
       if List.mem attr attrs then begin
-        Printf.fprintf fo "#define %s_ATTR_%s %d\n" uname
-	  (String.uppercase (string_of_attr attr)) anum;
+        Printf.fprintf fo "#define %s_ATTR_%s %d\n" uname uattr anum;
+	Printf.fprintf fo "#define %s_DATA_%s (void*) %s_vertices[0].%s\n"
+	  uname uattr name aname;
 	succ anum
-      end else
-        anum)
+      end else begin
+        Printf.fprintf fo "#define %s_ATTR_%s -1\n" uname uattr;
+	Printf.fprintf fo "#define %s_DATA_%s (void*) 0\n" uname uattr;
+        anum
+      end)
     0
     gl_attr_order)
 
